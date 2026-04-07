@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -10,26 +12,14 @@
     
     <title>VVIP Mission Control</title>
     <style>
-        /* Global body reset: Modern SaaS Slate Dark Mode */
-        body { background: #020617; color: #f8fafc; font-family: 'Inter', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
-        
-        /* Glassmorphism utility */
+        body { background: #020617; color: #f8fafc; font-family: 'Inter', system-ui, sans-serif; -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; }
         .glass { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.05); }
-        
-        /* Active filter state */
         .filter-btn { transition: all 0.2s ease; }
         .filter-btn.active { background: rgba(14, 165, 233, 0.15); border-color: #0ea5e9; color: #38bdf8; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
-        
-        /* Base flight card styling */
         .flight-card { min-height: 380px; display: flex; flex-direction: column; border-radius: 1rem; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
         .flight-card:hover { box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5); transform: translateY(-2px); }
-        
-        /* Checkbox color customization */
-        .vvip-check { accent-color: #0ea5e9; width: 14px; height: 14px; cursor: pointer; border-radius: 3px; }
-        
-        /* Softened Critical Risk Alert */
+        .vvip-check { accent-color: #0ea5e9; width: 16px; height: 16px; cursor: pointer; border-radius: 3px; }
         .risk-glow { animation: risk-pulse 2.5s infinite; border-color: rgba(239, 68, 68, 0.5) !important; }
-        /* Softened Permit Warning */
         .permit-glow { animation: permit-pulse 2.5s infinite; border-color: rgba(249, 115, 22, 0.5) !important; }
         
         @keyframes risk-pulse { 
@@ -43,162 +33,160 @@
             100% { box-shadow: inset 0 0 0px rgba(249, 115, 22, 0); } 
         }
         
-        /* Custom scrollbar styling */
-        .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #475569; }
-        
-        /* Card flip animation styles */
+        .hide-scroll::-webkit-scrollbar { display: none; }
+        .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+
         .card-flip { perspective: 1000px; }
         .card-flip-inner { position: relative; width: 100%; height: 100%; text-align: left; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; }
         .card-flipped .card-flip-inner { transform: rotateY(180deg); }
         .card-front, .card-back { position: absolute; width: 100%; height: 100%; display: flex; flex-direction: column; -webkit-backface-visibility: hidden; backface-visibility: hidden; border-radius: 1rem; overflow: hidden; }
         .card-back { transform: rotateY(180deg); background: #0f172a; border-color: rgba(14, 165, 233, 0.3); }
 
-        /* Data Manifest Row */
         .manifest-row { display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .manifest-row:last-child { border-bottom: none; }
 
-        /* Status Select Styling */
         select.status-dropdown option { background-color: #0f172a; color: #cbd5e1; font-weight: 500; }
 
         @media (max-width: 1024px) {
-            .flight-card { min-height: 340px; }
-            #utc-clock { font-size: 3rem; }
+            .flight-card { min-height: 350px; }
             header { padding-left: 1.5rem; padding-right: 1.5rem; }
         }
 
         @media (max-width: 768px) {
             body { font-size: 14px; }
-            .flight-card { min-height: 360px; }
-            #utc-clock { font-size: 2.5rem; }
+            .flight-card { min-height: 370px; }
             header { height: auto; min-height: 4rem; flex-wrap: wrap; gap: 0.75rem; padding: 1rem; }
-            #search-input { width: 100% !important; }
+            input[type="text"], input[type="number"], input[type="email"], input[type="password"], input[type="datetime-local"], textarea {
+                font-size: 16px !important; 
+            }
         }
     </style>
 </head>
 <body class="min-h-screen overflow-hidden flex flex-col">
 
-    <div id="toast-container" class="fixed top-5 right-5 z-[200] flex flex-col gap-2 pointer-events-none"></div>
+    <div id="toast-container" class="fixed top-5 right-5 z-[200] flex flex-col gap-2 pointer-events-none w-[90%] max-w-sm sm:w-auto"></div>
 
-    <div id="notif-sidebar" class="fixed inset-y-0 right-0 w-96 bg-slate-900 border-l border-slate-800 z-[60] transform translate-x-full transition-transform duration-300 flex flex-col shadow-2xl">
-        <div class="p-5 border-b border-slate-800 flex justify-between items-center bg-slate-950/50">
+    <div id="notif-sidebar" class="fixed inset-y-0 right-0 w-[85vw] sm:w-96 bg-slate-900 border-l border-slate-800 z-[60] transform translate-x-full transition-transform duration-300 flex flex-col shadow-2xl">
+        <div class="p-4 sm:p-5 border-b border-slate-800 flex justify-between items-center bg-slate-950/50">
             <div><h3 class="text-sm font-bold tracking-wide text-sky-400">Audit Control Log</h3></div>
-            <button onclick="toggleNotifs()" class="text-slate-500 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <button onclick="toggleNotifs()" class="text-slate-500 hover:text-white p-2 -mr-2"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
         <div class="p-4 border-b border-slate-800">
-            <input type="text" id="notif-search" oninput="filterLogs()" placeholder="Search logs by Tail or User..." class="w-full bg-slate-950 border border-slate-700 p-2.5 rounded-lg text-xs text-white outline-none focus:border-sky-500">
+            <input type="text" id="notif-search" oninput="filterLogs()" placeholder="Search logs by Tail..." class="w-full bg-slate-950 border border-slate-700 p-3 rounded-lg text-sm text-white outline-none focus:border-sky-500">
         </div>
         <div id="log-container" class="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar"></div>
-        <div class="p-4 border-t border-slate-800 bg-slate-950/30">
-            <button onclick="fetchLogs(true)" class="w-full py-2 text-[11px] font-semibold uppercase text-slate-400 hover:text-sky-400 transition-colors tracking-wider rounded border border-slate-700 hover:border-sky-500/50">Load Older History</button>
+        <div class="p-4 border-t border-slate-800 bg-slate-950/30 pb-safe">
+            <button onclick="fetchLogs(true)" class="w-full py-3 text-xs font-semibold uppercase text-slate-400 hover:text-sky-400 transition-colors tracking-wider rounded-lg border border-slate-700 hover:border-sky-500/50">Load Older History</button>
         </div>
     </div>
 
-    <div id="login-screen" class="fixed inset-0 z-[100] bg-slate-950 flex items-center justify-center p-6 text-center">
-        <div class="glass w-full max-w-sm p-8 rounded-2xl shadow-2xl border border-slate-800">
+    <div id="login-screen" class="fixed inset-0 z-[100] bg-slate-950 flex items-center justify-center p-4 sm:p-6 text-center">
+        <div class="glass w-full max-w-sm p-6 sm:p-8 rounded-2xl shadow-2xl border border-slate-800">
             <div class="flex justify-center mb-6">
                 <i data-lucide="plane-takeoff" class="w-10 h-10 text-sky-500"></i>
             </div>
             <h1 class="text-2xl font-bold mb-6 text-white tracking-tight">VVIP Ops Center</h1>
-            <input type="email" id="email" placeholder="Email" class="w-full bg-slate-900/80 border border-slate-700 p-3 rounded-lg mb-4 text-white outline-none focus:border-sky-500 text-sm">
-            <input type="password" id="password" placeholder="Password" class="w-full bg-slate-900/80 border border-slate-700 p-3 rounded-lg mb-6 text-white outline-none focus:border-sky-500 text-sm">
-            <button onclick="handleLogin()" class="w-full bg-sky-600 hover:bg-sky-500 py-3 rounded-lg font-semibold text-white transition-all shadow-lg shadow-sky-900/20 text-sm">Sign In</button>
+            <input type="email" id="email" placeholder="Email" class="w-full bg-slate-900/80 border border-slate-700 p-3.5 rounded-lg mb-4 text-white outline-none focus:border-sky-500 text-base">
+            <input type="password" id="password" placeholder="Password" class="w-full bg-slate-900/80 border border-slate-700 p-3.5 rounded-lg mb-6 text-white outline-none focus:border-sky-500 text-base">
+            <button onclick="handleLogin()" class="w-full bg-sky-600 hover:bg-sky-500 py-3.5 rounded-lg font-semibold text-white transition-all shadow-lg shadow-sky-900/20 text-sm">Sign In</button>
         </div>
     </div>
 
     <div id="main-dashboard" class="hidden h-screen flex flex-col">
-        <header class="h-16 border-b border-slate-800 px-8 flex justify-between items-center bg-slate-900 shrink-0">
+        <header class="h-auto sm:h-16 border-b border-slate-800 px-4 sm:px-8 py-3 flex justify-between items-center bg-slate-900 shrink-0">
             <div class="flex items-center gap-3">
-                <i data-lucide="plane-takeoff" class="w-5 h-5 text-sky-400"></i>
-                <h1 class="text-lg font-bold text-white tracking-tight">Mission Control</h1>
+                <i data-lucide="plane-takeoff" class="w-5 h-5 text-sky-400 shrink-0"></i>
+                <h1 class="text-base sm:text-lg font-bold text-white tracking-tight truncate">Mission Control</h1>
             </div>
-            <div class="flex items-center gap-5">
+            <div class="flex items-center gap-3 sm:gap-5">
                 <button id="admin-audit-btn" onclick="toggleNotifs()" class="hidden relative p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-all"><i data-lucide="activity" class="w-5 h-5"></i><span id="notif-dot" class="hidden absolute top-1 right-1 w-2.5 h-2.5 bg-sky-500 border-2 border-slate-900 rounded-full"></span></button>
-                <div class="h-5 w-px bg-slate-700 hidden md:block"></div>
-                <span id="user-display" class="text-xs font-medium text-slate-400"></span>
-                <button onclick="handleLogout()" class="text-xs font-semibold text-slate-400 hover:text-red-400 transition-colors">Sign Out</button>
+                <div class="h-5 w-px bg-slate-700 hidden sm:block"></div>
+                <span id="user-display" class="text-xs font-medium text-slate-400 hidden sm:block"></span>
+                <button onclick="handleLogout()" class="text-xs font-semibold text-slate-400 hover:text-red-400 transition-colors p-2 -mr-2 sm:p-0 sm:mr-0">Sign Out</button>
             </div>
         </header>
 
-        <main class="flex-1 p-6 overflow-y-auto bg-slate-950 custom-scrollbar">
+        <main class="flex-1 p-4 sm:p-6 overflow-y-auto bg-slate-950 custom-scrollbar pb-24">
             
-            <div id="admin-analytics" class="hidden grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl flex flex-col justify-center shadow-sm">
-                    <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">This Week</p>
-                    <p id="stat-week" class="text-2xl font-bold text-sky-400 leading-none">0</p>
+            <div id="admin-analytics" class="hidden grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6">
+                <div class="bg-slate-900 border border-slate-800 p-3 sm:p-4 rounded-xl flex flex-col justify-center shadow-sm">
+                    <p class="text-[9px] sm:text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">This Week</p>
+                    <p id="stat-week" class="text-xl sm:text-2xl font-bold text-sky-400 leading-none">0</p>
                 </div>
-                <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl flex flex-col justify-center shadow-sm">
-                    <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">This Month</p>
-                    <p id="stat-month" class="text-2xl font-bold text-white leading-none">0</p>
+                <div class="bg-slate-900 border border-slate-800 p-3 sm:p-4 rounded-xl flex flex-col justify-center shadow-sm">
+                    <p class="text-[9px] sm:text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">This Month</p>
+                    <p id="stat-month" class="text-xl sm:text-2xl font-bold text-white leading-none">0</p>
                 </div>
-                <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl flex flex-col justify-center shadow-sm">
-                    <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">This Year</p>
-                    <p id="stat-year" class="text-2xl font-bold text-white leading-none">0</p>
+                <div class="bg-slate-900 border border-slate-800 p-3 sm:p-4 rounded-xl flex flex-col justify-center shadow-sm">
+                    <p class="text-[9px] sm:text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">This Year</p>
+                    <p id="stat-year" class="text-xl sm:text-2xl font-bold text-white leading-none">0</p>
                 </div>
-                <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl flex flex-col justify-center shadow-sm">
-                    <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Total Operated</p>
-                    <p id="stat-total" class="text-2xl font-bold text-white leading-none">0</p>
-                </div>
-            </div>
-
-            <div class="mb-8 flex justify-center">
-                <div class="bg-slate-900 border border-slate-800 rounded-2xl px-8 py-5 w-full max-w-xl text-center shadow-md">
-                    <p class="text-[10px] font-semibold uppercase tracking-widest text-slate-500 mb-1">Universal Coordinated Time</p>
-                    <p id="utc-clock" class="text-4xl md:text-5xl font-mono font-bold text-sky-400 tracking-tight">00:00:00</p>
-                    <p id="utc-date" class="mt-1 text-xs text-slate-400 font-medium">Loading...</p>
+                <div class="bg-slate-900 border border-slate-800 p-3 sm:p-4 rounded-xl flex flex-col justify-center shadow-sm">
+                    <p class="text-[9px] sm:text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Total Operated</p>
+                    <p id="stat-total" class="text-xl sm:text-2xl font-bold text-white leading-none">0</p>
                 </div>
             </div>
 
-            <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-6 pb-6 border-b border-slate-800/50">
-                <div class="flex flex-wrap gap-2 w-full md:w-auto">
-                    <button onclick="setFilter('all')" id="btn-all" class="filter-btn active px-4 py-2 rounded-lg text-xs font-semibold border border-transparent text-slate-300 hover:bg-slate-800">All</button>
-                    <button onclick="setFilter('today')" id="btn-today" class="filter-btn px-4 py-2 rounded-lg text-xs font-medium border border-transparent text-slate-400 hover:bg-slate-800 hover:text-slate-200">Today</button>
-                    <button onclick="setFilter('tomorrow')" id="btn-tomorrow" class="filter-btn px-4 py-2 rounded-lg text-xs font-medium border border-transparent text-slate-400 hover:bg-slate-800 hover:text-slate-200">Tomorrow</button>
-                    <button onclick="setFilter('week')" id="btn-week" class="filter-btn px-4 py-2 rounded-lg text-xs font-medium border border-transparent text-slate-400 hover:bg-slate-800 hover:text-slate-200">Week</button>
-                    <button onclick="setFilter('month')" id="btn-month" class="filter-btn px-4 py-2 rounded-lg text-xs font-medium border border-transparent text-slate-400 hover:bg-slate-800 hover:text-slate-200">Month</button>
-                    <div class="w-px bg-slate-800 mx-1 hidden sm:block"></div>
-                    <button onclick="setFilter('overflying')" id="btn-overflying" class="filter-btn px-4 py-2 rounded-lg text-xs font-medium border border-transparent text-sky-400/80 hover:bg-sky-500/10">Overflight</button>
-                    <button onclick="setFilter('risk')" id="btn-risk" class="filter-btn px-4 py-2 rounded-lg text-xs font-medium border border-transparent text-red-400/80 hover:bg-red-500/10">Risks</button>
-                    <button onclick="setFilter('permit')" id="btn-permit" class="filter-btn px-4 py-2 rounded-lg text-xs font-medium border border-transparent text-orange-400/80 hover:bg-orange-500/10">Permits</button>
-                </div>
-                <div class="relative w-full md:w-72">
-                    <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-slate-500"></i>
-                    <input type="text" id="search-input" oninput="applyFilter()" placeholder="Search flights..." class="w-full bg-slate-900 border border-slate-700 rounded-lg pl-9 pr-4 py-2 text-sm text-white outline-none focus:border-sky-500 transition-colors">
+            <div class="mb-6 sm:mb-8 flex justify-center">
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl px-4 sm:px-8 py-4 sm:py-5 w-full max-w-xl text-center shadow-md">
+                    <p class="text-[9px] sm:text-[10px] font-semibold uppercase tracking-widest text-slate-500 mb-1">Universal Coordinated Time</p>
+                    <p id="utc-clock" class="text-3xl sm:text-4xl md:text-5xl font-mono font-bold text-sky-400 tracking-tight">00:00:00</p>
+                    <p id="utc-date" class="mt-1 text-[10px] sm:text-xs text-slate-400 font-medium">Loading...</p>
                 </div>
             </div>
 
-            <div id="flight-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            <div class="flex flex-col gap-4 mb-6 pb-4 border-b border-slate-800/50">
+                <div class="flex overflow-x-auto hide-scroll snap-x gap-2 w-full pb-1">
+                    <button onclick="setFilter('all')" id="btn-all" class="filter-btn active px-4 py-2 rounded-lg text-xs font-semibold border border-transparent text-slate-300 hover:bg-slate-800 whitespace-nowrap snap-start shrink-0">All</button>
+                    <button onclick="setFilter('today')" id="btn-today" class="filter-btn px-4 py-2 rounded-lg text-xs font-medium border border-transparent text-slate-400 hover:bg-slate-800 hover:text-slate-200 whitespace-nowrap snap-start shrink-0">Today</button>
+                    <button onclick="setFilter('tomorrow')" id="btn-tomorrow" class="filter-btn px-4 py-2 rounded-lg text-xs font-medium border border-transparent text-slate-400 hover:bg-slate-800 hover:text-slate-200 whitespace-nowrap snap-start shrink-0">Tomorrow</button>
+                    <button onclick="setFilter('week')" id="btn-week" class="filter-btn px-4 py-2 rounded-lg text-xs font-medium border border-transparent text-slate-400 hover:bg-slate-800 hover:text-slate-200 whitespace-nowrap snap-start shrink-0">Week</button>
+                    <button onclick="setFilter('month')" id="btn-month" class="filter-btn px-4 py-2 rounded-lg text-xs font-medium border border-transparent text-slate-400 hover:bg-slate-800 hover:text-slate-200 whitespace-nowrap snap-start shrink-0">Month</button>
+                    <div class="w-px bg-slate-800 mx-1 hidden sm:block shrink-0"></div>
+                    <button onclick="setFilter('overflying')" id="btn-overflying" class="filter-btn px-4 py-2 rounded-lg text-xs font-medium border border-transparent text-sky-400/80 hover:bg-sky-500/10 whitespace-nowrap snap-start shrink-0">Overflight</button>
+                    <button onclick="setFilter('risk')" id="btn-risk" class="filter-btn px-4 py-2 rounded-lg text-xs font-medium border border-transparent text-red-400/80 hover:bg-red-500/10 whitespace-nowrap snap-start shrink-0">Risks</button>
+                    <button onclick="setFilter('permit')" id="btn-permit" class="filter-btn px-4 py-2 rounded-lg text-xs font-medium border border-transparent text-orange-400/80 hover:bg-orange-500/10 whitespace-nowrap snap-start shrink-0">Permits</button>
+                </div>
+                <div class="relative w-full md:w-72 md:ml-auto">
+                    <i data-lucide="search" class="w-4 h-4 absolute left-3 top-[11px] text-slate-500"></i>
+                    <input type="text" id="search-input" oninput="applyFilter()" placeholder="Search flights..." class="w-full bg-slate-900 border border-slate-700 rounded-lg pl-9 pr-4 py-2.5 sm:py-2 text-sm text-white outline-none focus:border-sky-500 transition-colors">
+                </div>
+            </div>
 
-            <div id="completed-section" class="mt-12 hidden">
+            <div id="flight-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"></div>
+
+            <div id="completed-section" class="mt-10 hidden">
                 <div class="flex items-center gap-4 mb-6">
                     <div class="h-px flex-1 bg-slate-800"></div>
-                    <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-widest">Archived Records</h3>
+                    <h3 class="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-widest whitespace-nowrap">Archived Records</h3>
                     <div class="h-px flex-1 bg-slate-800"></div>
                 </div>
-                <div id="completed-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 opacity-75 hover:opacity-100 transition-opacity duration-300"></div>
+                <div id="completed-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 opacity-75 hover:opacity-100 transition-opacity duration-300"></div>
                 <div id="archive-load-more-container" class="mt-8 flex justify-center hidden">
-                    <button onclick="loadMoreArchives()" class="px-6 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-xs font-semibold text-slate-400 hover:text-white hover:border-slate-500 transition-all">Load More History</button>
+                    <button onclick="loadMoreArchives()" class="px-6 py-3 sm:py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-xs font-semibold text-slate-400 hover:text-white hover:border-slate-500 transition-all">Load More History</button>
                 </div>
             </div>
             
-            <button onclick="openScheduleModal()" class="fixed bottom-8 right-8 bg-sky-500 text-white w-14 h-14 rounded-full shadow-xl shadow-sky-500/20 flex items-center justify-center hover:bg-sky-400 hover:scale-105 transition-all z-[50]"><i data-lucide="plus" class="w-6 h-6"></i></button>
+            <button onclick="openScheduleModal()" class="fixed bottom-6 right-6 sm:bottom-8 sm:right-8 bg-sky-500 text-white w-14 h-14 rounded-full shadow-xl shadow-sky-500/30 flex items-center justify-center hover:bg-sky-400 hover:scale-105 transition-all z-[50]"><i data-lucide="plus" class="w-6 h-6"></i></button>
         </main>
     </div>
 
-    <div id="modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden z-[110] flex items-center justify-center p-4">
-        <div class="bg-slate-900 w-full max-w-lg p-6 md:p-8 rounded-2xl border border-slate-700 shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar relative">
-            <button onclick="closeModal()" class="absolute top-5 right-5 text-slate-500 hover:text-white transition-colors z-10"><i data-lucide="x" class="w-5 h-5"></i></button>
-            <h2 id="modal-title" class="text-xl font-bold text-white mb-6">Schedule Mission</h2>
+    <div id="modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden z-[110] flex items-center justify-center p-3 sm:p-4">
+        <div class="bg-slate-900 w-full max-w-lg p-5 sm:p-8 rounded-2xl border border-slate-700 shadow-2xl max-h-[95vh] overflow-y-auto custom-scrollbar relative">
+            <button onclick="closeModal()" class="absolute top-4 right-4 sm:top-5 sm:right-5 text-slate-500 hover:text-white transition-colors z-10 bg-slate-800 sm:bg-transparent rounded-full p-1"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <h2 id="modal-title" class="text-lg sm:text-xl font-bold text-white mb-5 sm:mb-6">Schedule Mission</h2>
             
-            <form id="flight-form" onsubmit="event.preventDefault(); addOrUpdateFlight();" class="space-y-4">
+            <form id="flight-form" onsubmit="event.preventDefault(); addOrUpdateFlight();" class="space-y-3 sm:space-y-4">
                 <div id="mission-type-container" class="flex p-1 bg-slate-950 rounded-lg border border-slate-800">
                     <button type="button" onclick="setMissionType('landing')" id="type-landing" class="flex-1 py-2 rounded-md text-xs font-semibold transition-all bg-slate-800 text-white shadow-sm">Landing</button>
                     <button type="button" onclick="setMissionType('overflying')" id="type-overflying" class="flex-1 py-2 rounded-md text-xs font-medium transition-all text-slate-400 hover:text-slate-200 hover:bg-slate-800/50">Overflying</button>
                 </div>
                 
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div>
                         <label class="block text-[10px] font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Registration</label>
                         <input id="new-tail" type="text" placeholder="N12345" required class="w-full bg-slate-950 border border-slate-700 p-2.5 rounded-lg text-sm text-white uppercase focus:border-sky-500 outline-none">
@@ -209,46 +197,46 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div>
                         <label class="block text-[10px] font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Aircraft Type</label>
                         <input id="new-aircraft-type" type="text" placeholder="GLF6" required class="w-full bg-slate-950 border border-slate-700 p-2.5 rounded-lg text-sm text-white uppercase focus:border-sky-500 outline-none">
                     </div>
                     <div>
-                        <label class="block text-[10px] font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">MTOW (kg)</label>
-                        <input id="new-mtow" type="number" placeholder="45000" required class="w-full bg-slate-950 border border-slate-700 p-2.5 rounded-lg text-sm text-white focus:border-sky-500 outline-none">
+                        <label id="mtow-label" class="block text-[10px] font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">MTOW (kg)</label>
+                        <input id="new-mtow" type="number" placeholder="45000" required class="w-full bg-slate-950 border border-slate-700 p-2.5 rounded-lg text-sm text-white focus:border-sky-500 outline-none transition-opacity">
                     </div>
                 </div>
 
-                <div class="bg-slate-950/50 p-4 rounded-xl border border-slate-800">
-                    <div class="grid grid-cols-2 gap-4 mb-4">
+                <div class="bg-slate-950/50 p-3 sm:p-4 rounded-xl border border-slate-800">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4">
                         <div>
                             <label class="block text-[10px] font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Call Sign (Opt)</label>
-                            <input id="new-callsign" type="text" placeholder="VVIP01" class="w-full bg-slate-900 border border-slate-700 p-2 rounded-md text-xs text-white uppercase focus:border-sky-500 outline-none">
+                            <input id="new-callsign" type="text" placeholder="VVIP01" class="w-full bg-slate-900 border border-slate-700 p-2.5 sm:p-2 rounded-md text-sm sm:text-xs text-white uppercase focus:border-sky-500 outline-none">
                         </div>
                         <div>
                             <label class="block text-[10px] font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Captain (Opt)</label>
-                            <input id="new-captain" type="text" placeholder="Name" class="w-full bg-slate-900 border border-slate-700 p-2 rounded-md text-xs text-white uppercase focus:border-sky-500 outline-none">
+                            <input id="new-captain" type="text" placeholder="Name" class="w-full bg-slate-900 border border-slate-700 p-2.5 sm:p-2 rounded-md text-sm sm:text-xs text-white uppercase focus:border-sky-500 outline-none">
                         </div>
                     </div>
-                    <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div class="grid grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4">
                         <div>
-                            <label class="block text-[10px] font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Crew Count</label>
-                            <input id="new-crew-count" type="number" placeholder="0" class="w-full bg-slate-900 border border-slate-700 p-2 rounded-md text-xs text-white focus:border-sky-500 outline-none">
+                            <label class="block text-[10px] font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Crew</label>
+                            <input id="new-crew-count" type="number" placeholder="0" class="w-full bg-slate-900 border border-slate-700 p-2.5 sm:p-2 rounded-md text-sm sm:text-xs text-white focus:border-sky-500 outline-none">
                         </div>
                         <div>
-                            <label class="block text-[10px] font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Pax Count</label>
-                            <input id="new-pax-count" type="number" placeholder="0" class="w-full bg-slate-900 border border-slate-700 p-2 rounded-md text-xs text-white focus:border-sky-500 outline-none">
+                            <label class="block text-[10px] font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Pax</label>
+                            <input id="new-pax-count" type="number" placeholder="0" class="w-full bg-slate-900 border border-slate-700 p-2.5 sm:p-2 rounded-md text-sm sm:text-xs text-white focus:border-sky-500 outline-none">
                         </div>
                     </div>
-                    <div class="grid grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                         <div>
                             <label class="block text-[10px] font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Permit No</label>
-                            <input id="new-permit-no" type="text" placeholder="TBA" class="w-full bg-slate-900 border border-slate-700 p-2 rounded-md text-xs text-white uppercase focus:border-sky-500 outline-none">
+                            <input id="new-permit-no" type="text" placeholder="TBA" class="w-full bg-slate-900 border border-slate-700 p-2.5 sm:p-2 rounded-md text-sm sm:text-xs text-white uppercase focus:border-sky-500 outline-none">
                         </div>
                         <div>
                             <label class="block text-[10px] font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Handling Agent</label>
-                            <input id="new-ground-handling" type="text" placeholder="Agent Name" class="w-full bg-slate-900 border border-slate-700 p-2 rounded-md text-xs text-white uppercase focus:border-sky-500 outline-none">
+                            <input id="new-ground-handling" type="text" placeholder="Agent Name" class="w-full bg-slate-900 border border-slate-700 p-2.5 sm:p-2 rounded-md text-sm sm:text-xs text-white uppercase focus:border-sky-500 outline-none transition-opacity">
                         </div>
                     </div>
                 </div>
@@ -258,27 +246,30 @@
                     <input id="new-country" type="text" placeholder="France" class="w-full bg-slate-950 border border-slate-700 p-2.5 rounded-lg text-sm text-white uppercase focus:border-sky-500 outline-none">
                 </div>
                 
-                <div id="services-fields" class="hidden bg-slate-950/50 p-4 rounded-xl border border-slate-800">
+                <div id="services-fields" class="hidden bg-slate-950/50 p-3 sm:p-4 rounded-xl border border-slate-800">
                     <p class="text-[10px] font-semibold text-slate-400 mb-3 uppercase tracking-wider">Requested Services</p>
                     <div class="flex flex-wrap gap-4">
-                        <label class="flex items-center gap-2 text-xs font-medium text-slate-300 cursor-pointer">
-                            <input type="checkbox" id="new-catering" class="vvip-check"> Catering
+                        <label class="flex items-center gap-2 text-sm sm:text-xs font-medium text-slate-300 cursor-pointer">
+                            <input type="checkbox" id="new-catering" class="vvip-check w-4 h-4 sm:w-[14px] sm:h-[14px]"> Catering
                         </label>
-                        <label class="flex items-center gap-2 text-xs font-medium text-slate-300 cursor-pointer">
-                            <input type="checkbox" id="new-transport" class="vvip-check"> Transport
+                        <label class="flex items-center gap-2 text-sm sm:text-xs font-medium text-slate-300 cursor-pointer">
+                            <input type="checkbox" id="new-transport" class="vvip-check w-4 h-4 sm:w-[14px] sm:h-[14px]"> Transport
                         </label>
-                        <label class="flex items-center gap-2 text-xs font-medium text-slate-300 cursor-pointer">
-                            <input type="checkbox" id="new-fuel" class="vvip-check"> Fuel
+                        <label class="flex items-center gap-2 text-sm sm:text-xs font-medium text-slate-300 cursor-pointer">
+                            <input type="checkbox" id="new-fuel" class="vvip-check w-4 h-4 sm:w-[14px] sm:h-[14px]"> Fuel
                         </label>
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-[10px] font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Schedule (UTC)</label>
-                    <input id="new-etd" type="datetime-local" required class="w-full bg-slate-950 border border-slate-700 p-2.5 rounded-lg text-sm text-white [color-scheme:dark] focus:border-sky-500 outline-none">
+                    <div class="flex justify-between items-end mb-1.5">
+                        <label class="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Schedule (Local Time)</label>
+                        <span id="utc-preview" class="text-[9px] font-bold text-sky-400 uppercase tracking-widest hidden"></span>
+                    </div>
+                    <input id="new-etd" type="datetime-local" oninput="updateUtcPreview(this.value)" required class="w-full bg-slate-950 border border-slate-700 p-2.5 rounded-lg text-sm text-white [color-scheme:dark] focus:border-sky-500 outline-none">
                 </div>
 
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-2 gap-3 sm:gap-4">
                     <div>
                         <label class="block text-[10px] font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Origin (ICAO)</label>
                         <input id="new-origin" type="text" placeholder="KJFK" maxlength="4" required class="w-full bg-slate-950 border border-slate-700 p-2.5 rounded-lg text-sm text-white uppercase font-mono focus:border-sky-500 outline-none">
@@ -294,7 +285,7 @@
                     <textarea id="new-remarks" placeholder="Optional dispatch notes..." rows="2" class="w-full bg-slate-950 border border-slate-700 p-2.5 rounded-lg text-sm text-white resize-none focus:border-sky-500 outline-none"></textarea>
                 </div>
 
-                <div class="pt-3 border-t border-slate-800">
+                <div class="pt-2 sm:pt-3 border-t border-slate-800">
                     <button id="modal-submit" type="submit" class="w-full bg-sky-500 hover:bg-sky-400 text-white py-3.5 rounded-lg font-semibold text-sm transition-colors shadow-md">Save Mission</button>
                 </div>
             </form>
@@ -314,16 +305,15 @@
         const MONTH_NAMES = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
         const STATUS_VALUES = ['Pending', 'Ready', 'Departed', 'Arrived'];
 
-        // --- ERROR HANDLING (TOAST NOTIFICATIONS) ---
         function showToast(message, type = 'success') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
             const isError = type === 'error';
-            toast.className = `p-4 rounded-lg shadow-xl border flex items-center gap-3 transform transition-all duration-300 translate-x-full opacity-0 ${isError ? 'bg-red-500/10 border-red-500/30 text-red-400' : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'}`;
+            toast.className = `p-3 sm:p-4 rounded-lg shadow-xl border flex items-start sm:items-center gap-3 transform transition-all duration-300 translate-x-full opacity-0 ${isError ? 'bg-red-500/10 border-red-500/30 text-red-400' : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'}`;
             
             toast.innerHTML = `
-                <i data-lucide="${isError ? 'alert-circle' : 'check-circle'}" class="w-5 h-5"></i>
-                <span class="text-xs font-semibold tracking-wide">${message}</span>
+                <i data-lucide="${isError ? 'alert-circle' : 'check-circle'}" class="w-5 h-5 shrink-0 mt-0.5 sm:mt-0"></i>
+                <span class="text-xs font-semibold tracking-wide leading-snug">${message}</span>
             `;
             container.appendChild(toast);
             lucide.createIcons();
@@ -336,21 +326,17 @@
             }, 4000);
         }
 
-        function parseDateTimeLocalAsUTC(value) {
-            if (!value || !value.includes('T')) return null;
-            const [datePart, timePart] = value.split('T');
-            const [year, month, day] = datePart.split('-').map(Number);
-            const [hours, minutes] = timePart.split(':').map(Number);
-            if ([year, month, day, hours, minutes].some(Number.isNaN)) return null;
-            return new Date(Date.UTC(year, month - 1, day, hours, minutes));
-        }
-
-        function formatDateTimeLocalUTC(date) {
-            return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}T${String(date.getUTCHours()).padStart(2, '0')}:${String(date.getUTCMinutes()).padStart(2, '0')}`;
-        }
-
         function formatFlightZulu(date) {
             return `${String(date.getUTCDate()).padStart(2, '0')} ${MONTH_NAMES[date.getUTCMonth()]} ${date.getUTCFullYear()} ${String(date.getUTCHours()).padStart(2, '0')}:${String(date.getUTCMinutes()).padStart(2, '0')}`;
+        }
+
+        function updateUtcPreview(val) {
+            const preview = document.getElementById('utc-preview');
+            if (!val) { preview.classList.add('hidden'); return; }
+            const d = new Date(val);
+            if (Number.isNaN(d.getTime())) return;
+            preview.innerText = formatFlightZulu(d) + " ZULU";
+            preview.classList.remove('hidden');
         }
 
         function parseFlightDate(flight, referenceDate = new Date()) {
@@ -481,7 +467,6 @@
             if (!card) return;
             card.classList.remove('card-flipped');
             
-            // Ensure remarks drawer closes when card flips back
             const id = cardId.replace('card-', '');
             const remarksPanel = document.getElementById(`remarks-${id}`);
             if (remarksPanel) remarksPanel.classList.add('translate-y-full');
@@ -489,7 +474,6 @@
             if (flipCardTimers[cardId]) { clearTimeout(flipCardTimers[cardId]); delete flipCardTimers[cardId]; }
         }
 
-        // SLIDING DRAWER TOGGLE
         function toggleRemarks(id, event) {
             if (event) event.stopPropagation();
             const panel = document.getElementById(`remarks-${id}`);
@@ -509,6 +493,7 @@
             editingFlightId = null; 
             document.getElementById('flight-form').reset(); 
             
+            document.getElementById('mission-type-container').classList.remove('hidden');
             setMissionType(previousFlight.mission_type || 'landing');
             document.getElementById('modal-title').innerText = "Schedule Next Leg"; 
             
@@ -525,6 +510,7 @@
             document.getElementById('new-origin').value = previousFlight.dest_icao || '';
             document.getElementById('new-dest').value = ''; 
             document.getElementById('new-etd').value = ''; 
+            document.getElementById('utc-preview').classList.add('hidden');
             
             document.getElementById('new-permit-no').value = '';
             document.getElementById('new-remarks').value = '';
@@ -595,21 +581,30 @@
             selectedMissionType = type;
             const landBtn = document.getElementById('type-landing'), overBtn = document.getElementById('type-overflying'), countryField = document.getElementById('country-field'), countryInput = document.getElementById('new-country'), servicesFields = document.getElementById('services-fields');
             const groundHandlingInput = document.getElementById('new-ground-handling');
+            const mtowInput = document.getElementById('new-mtow');
+            const mtowLabel = document.getElementById('mtow-label');
             
             if (type === 'landing') {
                 landBtn.className = "flex-1 py-2 rounded-md text-xs font-semibold transition-all bg-slate-800 text-white shadow-sm";
-                overBtn.className = "flex-1 py-2 rounded-md text-xs font-medium transition-all text-slate-400 hover:text-slate-200";
+                overBtn.className = "flex-1 py-2 rounded-md text-xs font-medium transition-all text-slate-400 hover:text-slate-200 hover:bg-slate-800/50";
                 countryField.classList.add('hidden');
                 countryInput.required = false; countryInput.value = '';
                 servicesFields.classList.remove('hidden');
                 groundHandlingInput.disabled = false; groundHandlingInput.classList.remove('opacity-50');
+                
+                mtowLabel.innerText = "MTOW (kg)";
+                mtowInput.required = true;
             } else {
                 overBtn.className = "flex-1 py-2 rounded-md text-xs font-semibold transition-all bg-slate-800 text-white shadow-sm";
-                landBtn.className = "flex-1 py-2 rounded-md text-xs font-medium transition-all text-slate-400 hover:text-slate-200";
+                landBtn.className = "flex-1 py-2 rounded-md text-xs font-medium transition-all text-slate-400 hover:text-slate-200 hover:bg-slate-800/50";
                 countryField.classList.remove('hidden');
                 countryInput.required = true;
                 servicesFields.classList.add('hidden');
                 groundHandlingInput.disabled = true; groundHandlingInput.classList.add('opacity-50'); groundHandlingInput.value = '';
+                
+                mtowLabel.innerText = "MTOW (kg) (Opt)";
+                mtowInput.required = false;
+                
                 document.getElementById('new-catering').checked = false; document.getElementById('new-transport').checked = false; document.getElementById('new-fuel').checked = false;
             }
         }
@@ -622,7 +617,6 @@
             
             const value = checkboxElement.checked;
 
-            // STRICT COMPLIANCE
             if (field === 'permit_ready' && value === true) {
                 if (!f.permit_number || f.permit_number.trim() === '') {
                     checkboxElement.checked = false;
@@ -682,6 +676,7 @@
             document.getElementById('mission-type-container').classList.remove('hidden');
             setMissionType('landing'); 
             document.getElementById('new-etd').value = '';
+            document.getElementById('utc-preview').classList.add('hidden');
             document.getElementById('modal').classList.remove('hidden'); 
         }
 
@@ -689,7 +684,8 @@
             editingFlightId = id; const f = allFlights.find(x => x.id === id);
             if (!f) return;
             document.getElementById('modal-title').innerText = "Mission Config";
-            document.getElementById('mission-type-container').classList.add('hidden');
+            
+            document.getElementById('mission-type-container').classList.remove('hidden');
             setMissionType(f.mission_type || 'landing');
             
             document.getElementById('new-tail').value = f.tail_number;
@@ -711,17 +707,26 @@
             document.getElementById('new-remarks').value = f.remarks || '';
 
             const d = parseFlightDate(f);
-            document.getElementById('new-etd').value = Number.isNaN(d.getTime()) ? '' : formatDateTimeLocalUTC(d);
+            if (!Number.isNaN(d.getTime())) {
+                const offset = d.getTimezoneOffset() * 60000;
+                const localISOTime = new Date(d.getTime() - offset).toISOString().slice(0, 16);
+                document.getElementById('new-etd').value = localISOTime;
+                updateUtcPreview(localISOTime);
+            } else {
+                document.getElementById('new-etd').value = '';
+                document.getElementById('utc-preview').classList.add('hidden');
+            }
+            
             document.getElementById('modal').classList.remove('hidden');
         }
 
         function closeModal() { editingFlightId = null; document.getElementById('modal').classList.add('hidden'); }
 
         async function addOrUpdateFlight() {
-            const tail = document.getElementById('new-tail').value.trim().toUpperCase(), etdRaw = document.getElementById('new-etd').value, d = parseDateTimeLocalAsUTC(etdRaw), now = new Date();
+            const tail = document.getElementById('new-tail').value.trim().toUpperCase(), etdRaw = document.getElementById('new-etd').value, d = new Date(etdRaw), now = new Date();
             if (!d || Number.isNaN(d.getTime())) { showToast("INVALID DATE/TIME.", "error"); return; }
             if (!document.getElementById('new-aircraft-type').value.trim()) { showToast("AIRCRAFT TYPE IS REQUIRED.", "error"); return; }
-            if (!document.getElementById('new-mtow').value.trim()) { showToast("MTOW IS REQUIRED.", "error"); return; }
+            if (selectedMissionType === 'landing' && !document.getElementById('new-mtow').value.trim()) { showToast("MTOW IS REQUIRED.", "error"); return; }
             if (selectedMissionType === 'overflying' && !document.getElementById('new-country').value.trim()) { showToast("COUNTRY IS REQUIRED FOR OVERFLYING MISSIONS.", "error"); return; }
             if (currentUserRole === 'ops' && d < now) { showToast("STRICT PROTOCOL: BACKDATED FLIGHTS ARE PROHIBITED.", "error"); return; }
 
@@ -747,6 +752,7 @@
             if (editingFlightId) { 
                 const old = allFlights.find(x => x.id === editingFlightId);
                 let changes = [];
+                if (old.mission_type !== payload.mission_type) changes.push(`Mission changed to ${payload.mission_type.toUpperCase()}`);
                 if (old.tail_number !== payload.tail_number) changes.push(`Reg: ${old.tail_number} -> ${payload.tail_number}`);
                 if (old.etd_zulu !== payload.etd_zulu) changes.push(`Time: ${old.etd_zulu} -> ${payload.etd_zulu}`);
                 if (old.origin_icao !== payload.origin_icao) changes.push(`Origin: ${old.origin_icao} -> ${payload.origin_icao}`);
@@ -934,9 +940,9 @@
             }
             const servicesSection = servicesArr.length > 0 ? `<div class="flex items-center gap-1.5 ml-auto border-l border-slate-700 pl-3 shrink-0">${servicesArr.join('')}</div>` : '';
 
-            // FRONT CARD (Flexbox strict bounds)
+            // FRONT CARD
             const frontCard = `
-                <div class="p-6 flex-1 flex flex-col h-full bg-slate-900 rounded-[1rem]">
+                <div class="p-4 sm:p-6 flex-1 flex flex-col h-full bg-slate-900 rounded-[1rem]">
                     <div class="flex justify-between items-start mb-4 gap-3">
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center mb-1.5">
@@ -994,12 +1000,12 @@
                 </div>
             `;
 
-            // BACK CARD (Remarks Toggle & Buttons Fix)
+            // BACK CARD
             const backCard = `
-                <div class="p-6 flex flex-col h-full bg-slate-900 rounded-[1rem] relative overflow-hidden">
+                <div class="p-4 sm:p-6 flex flex-col h-full bg-slate-900 rounded-[1rem] relative overflow-hidden">
                     <div class="flex items-center justify-between mb-4 border-b border-slate-800 pb-4 gap-3">
                         <h3 class="text-sm font-bold text-white tracking-wide shrink-0">Mission Log</h3>
-                        <div class="flex gap-2 overflow-x-auto custom-scrollbar pb-1 items-center">
+                        <div class="flex gap-2 overflow-x-auto hide-scroll pb-1 items-center">
                             <button type="button" onclick="toggleRemarks('${f.id}', event)" class="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 px-2.5 py-1.5 rounded-md transition-colors shrink-0">
                                 <i data-lucide="message-square" class="w-3.5 h-3.5"></i> Remarks
                             </button>
@@ -1026,7 +1032,6 @@
                         <div class="manifest-row"><span class="manifest-label shrink-0 mr-2">Handling</span><span class="manifest-value truncate">${f.mission_type === 'overflying' ? 'N/A' : (f.ground_handling || 'TBA')}</span></div>
                     </div>
 
-                    <!-- SLIDING DRAWER FOR REMARKS -->
                     <div id="remarks-${f.id}" class="absolute inset-x-0 bottom-0 top-1/4 bg-slate-900/95 backdrop-blur-md z-20 flex flex-col p-6 transition-transform duration-300 translate-y-full border-t border-slate-700 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
                         <div class="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
                             <h3 class="text-sm font-bold text-amber-400 tracking-wide flex items-center gap-2"><i data-lucide="message-square" class="w-4 h-4"></i> Dispatch Remarks</h3>
