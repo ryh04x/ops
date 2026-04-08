@@ -12,14 +12,26 @@
     
     <title>VVIP Mission Control</title>
     <style>
+        /* Global body reset: Modern SaaS Slate Dark Mode */
         body { background: #020617; color: #f8fafc; font-family: 'Inter', system-ui, sans-serif; -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; }
+        
+        /* Glassmorphism utility */
         .glass { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.05); }
+        
+        /* Active filter state */
         .filter-btn { transition: all 0.2s ease; }
         .filter-btn.active { background: rgba(14, 165, 233, 0.15); border-color: #0ea5e9; color: #38bdf8; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        
+        /* Base flight card styling */
         .flight-card { min-height: 380px; display: flex; flex-direction: column; border-radius: 1rem; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
         .flight-card:hover { box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5); transform: translateY(-2px); }
+        
+        /* Checkbox color customization */
         .vvip-check { accent-color: #0ea5e9; width: 16px; height: 16px; cursor: pointer; border-radius: 3px; }
+        
+        /* Softened Critical Risk Alert */
         .risk-glow { animation: risk-pulse 2.5s infinite; border-color: rgba(239, 68, 68, 0.5) !important; }
+        /* Softened Permit Warning */
         .permit-glow { animation: permit-pulse 2.5s infinite; border-color: rgba(249, 115, 22, 0.5) !important; }
         
         @keyframes risk-pulse { 0% { box-shadow: inset 0 0 0px rgba(239, 68, 68, 0); } 50% { box-shadow: inset 0 0 15px rgba(239, 68, 68, 0.15), 0 0 10px rgba(239, 68, 68, 0.1); } 100% { box-shadow: inset 0 0 0px rgba(239, 68, 68, 0); } }
@@ -32,6 +44,7 @@
         .hide-scroll::-webkit-scrollbar { display: none; }
         .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
 
+        /* Card flip animation styles */
         .card-flip { perspective: 1000px; }
         .card-flip-inner { position: relative; width: 100%; height: 100%; text-align: left; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; }
         .card-flipped .card-flip-inner { transform: rotateY(180deg); }
@@ -43,11 +56,7 @@
 
         select.status-dropdown option { background-color: #0f172a; color: #cbd5e1; font-weight: 500; }
 
-        @media (max-width: 1024px) {
-            .flight-card { min-height: 350px; }
-            header { padding-left: 1.5rem; padding-right: 1.5rem; }
-        }
-
+        @media (max-width: 1024px) { .flight-card { min-height: 350px; } header { padding-left: 1.5rem; padding-right: 1.5rem; } }
         @media (max-width: 768px) {
             body { font-size: 14px; }
             .flight-card { min-height: 370px; }
@@ -66,15 +75,17 @@
             <button onclick="toggleNotifs()" class="text-slate-500 hover:text-white p-2 -mr-2"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
         <div class="p-4 border-b border-slate-800">
-            <input type="text" id="notif-search" oninput="filterLogs()" placeholder="Search logs by Tail..." class="w-full bg-slate-950 border border-slate-700 p-3 rounded-lg text-sm text-white outline-none focus:border-sky-500">
+            <div class="relative w-full">
+                <input type="text" id="notif-search" oninput="filterLogs(); toggleAuditClearBtn();" placeholder="Search logs by Tail..." class="w-full bg-slate-950 border border-slate-700 p-3 pr-10 rounded-lg text-sm text-white outline-none focus:border-sky-500">
+                <button id="clear-audit-btn" onclick="clearAuditSearch()" class="absolute right-3 top-3.5 text-slate-500 hover:text-white hidden"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
         </div>
-        <div id="log-container" class="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar"></div>
+        <div id="log-container" class="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar"></div>
         <div class="p-4 border-t border-slate-800 bg-slate-950/30 pb-safe">
             <button onclick="fetchLogs(true)" class="w-full py-3 text-xs font-semibold uppercase text-slate-400 hover:text-sky-400 transition-colors tracking-wider rounded-lg border border-slate-700 hover:border-sky-500/50">Load Older History</button>
         </div>
     </div>
 
-    <!-- UPDATE PASSWORD SCREEN (Triggered by Email Link) -->
     <div id="update-password-screen" class="fixed inset-0 z-[120] bg-slate-950 hidden flex items-center justify-center p-4 sm:p-6 text-center">
         <div class="glass w-full max-w-sm p-6 sm:p-8 rounded-2xl shadow-2xl border border-sky-500/30">
             <div class="flex justify-center mb-6">
@@ -92,10 +103,8 @@
         </div>
     </div>
 
-    <!-- LOGIN SCREEN -->
     <div id="login-screen" class="fixed inset-0 z-[100] bg-slate-950 flex items-center justify-center p-4 sm:p-6 text-center">
         <div class="glass w-full max-w-sm p-6 sm:p-8 rounded-2xl shadow-2xl border border-slate-800 relative overflow-hidden">
-            
             <div id="login-form-container" class="transition-transform duration-300 w-full">
                 <div class="flex justify-center mb-6">
                     <i data-lucide="plane-takeoff" class="w-10 h-10 text-sky-500"></i>
@@ -113,7 +122,6 @@
                 <button onclick="toggleForgotMode(true)" class="mt-5 text-xs font-semibold text-slate-400 hover:text-sky-400 transition-colors">Forgot Password?</button>
             </div>
 
-            <!-- FORGOT PASSWORD PANEL -->
             <div id="forgot-form-container" class="absolute inset-0 p-6 sm:p-8 bg-slate-900/95 flex flex-col justify-center transition-transform duration-300 translate-x-full w-full h-full">
                 <div class="flex justify-center mb-4">
                     <i data-lucide="mail" class="w-8 h-8 text-sky-400"></i>
@@ -129,11 +137,9 @@
                 </form>
                 <button onclick="toggleForgotMode(false)" class="text-xs font-semibold text-slate-400 hover:text-white transition-colors">Back to Login</button>
             </div>
-
         </div>
     </div>
 
-    <!-- MAIN DASHBOARD -->
     <div id="main-dashboard" class="hidden h-screen flex flex-col">
         <header class="h-auto sm:h-16 border-b border-slate-800 px-4 sm:px-8 py-3 flex justify-between items-center bg-slate-900 shrink-0">
             <div class="flex items-center gap-3">
@@ -190,7 +196,8 @@
                 </div>
                 <div class="relative w-full md:w-72 md:ml-auto">
                     <i data-lucide="search" class="w-4 h-4 absolute left-3 top-[11px] text-slate-500"></i>
-                    <input type="text" id="search-input" oninput="applyFilter()" placeholder="Search flights..." class="w-full bg-slate-900 border border-slate-700 rounded-lg pl-9 pr-4 py-2.5 sm:py-2 text-sm text-white outline-none focus:border-sky-500 transition-colors">
+                    <input type="text" id="search-input" oninput="applyFilter(); toggleFlightClearBtn();" placeholder="Search flights..." class="w-full bg-slate-900 border border-slate-700 rounded-lg pl-9 pr-10 py-2.5 sm:py-2 text-sm text-white outline-none focus:border-sky-500 transition-colors">
+                    <button id="clear-flight-btn" onclick="clearFlightSearch()" class="absolute right-3 top-[11px] text-slate-500 hover:text-white hidden"><i data-lucide="x" class="w-4 h-4"></i></button>
                 </div>
             </div>
 
@@ -212,7 +219,6 @@
         </main>
     </div>
 
-    <!-- SCHEDULE MODAL -->
     <div id="modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden z-[110] flex items-center justify-center p-3 sm:p-4">
         <div class="bg-slate-900 w-full max-w-lg p-5 sm:p-8 rounded-2xl border border-slate-700 shadow-2xl max-h-[95vh] overflow-y-auto custom-scrollbar relative">
             <button onclick="closeModal()" class="absolute top-4 right-4 sm:top-5 sm:right-5 text-slate-500 hover:text-white transition-colors z-10 bg-slate-800 sm:bg-transparent rounded-full p-1"><i data-lucide="x" class="w-5 h-5"></i></button>
@@ -267,15 +273,21 @@
                             <input id="new-pax-count" type="number" placeholder="0" class="w-full bg-slate-900 border border-slate-700 p-2.5 sm:p-2 rounded-md text-sm sm:text-xs text-white focus:border-sky-500 outline-none">
                         </div>
                     </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                        <div>
-                            <label class="block text-[10px] font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Permit No</label>
-                            <input id="new-permit-no" type="text" placeholder="TBA" class="w-full bg-slate-900 border border-slate-700 p-2.5 sm:p-2 rounded-md text-sm sm:text-xs text-white uppercase focus:border-sky-500 outline-none">
+                    
+                    <div>
+                        <label class="block text-[10px] font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Permit No</label>
+                        <input id="new-permit-no" type="text" placeholder="TBA" class="w-full bg-slate-900 border border-slate-700 p-2.5 sm:p-2 rounded-md text-sm sm:text-xs text-white uppercase focus:border-sky-500 outline-none transition-opacity">
+                        
+                        <div id="pending-block-container" class="mt-2.5 hidden">
+                            <label class="flex items-center gap-1.5 text-[10px] font-semibold text-slate-400 cursor-pointer w-max">
+                                <input type="checkbox" id="is-pending-block" class="vvip-check w-3.5 h-3.5" onchange="togglePendingBlock(this.checked)"> Permit awaited (Group as Pending Block)
+                            </label>
                         </div>
-                        <div>
-                            <label class="block text-[10px] font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Handling Agent</label>
-                            <input id="new-ground-handling" type="text" placeholder="Agent Name" class="w-full bg-slate-900 border border-slate-700 p-2.5 sm:p-2 rounded-md text-sm sm:text-xs text-white uppercase focus:border-sky-500 outline-none transition-opacity">
-                        </div>
+                    </div>
+
+                    <div class="mt-3 sm:mt-4">
+                        <label class="block text-[10px] font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Handling Agent</label>
+                        <input id="new-ground-handling" type="text" placeholder="Agent Name" class="w-full bg-slate-900 border border-slate-700 p-2.5 sm:p-2 rounded-md text-sm sm:text-xs text-white uppercase focus:border-sky-500 outline-none transition-opacity">
                     </div>
                 </div>
 
@@ -343,13 +355,11 @@
         const MONTH_NAMES = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
         const STATUS_VALUES = ['Pending', 'Ready', 'Departed', 'Arrived'];
 
-        // --- SECURITY / XSS SANITIZATION ---
         function safeText(str) {
             if (str === null || str === undefined) return '';
             return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
         }
 
-        // --- ERROR HANDLING (TOAST NOTIFICATIONS) ---
         function showToast(message, type = 'success') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
@@ -364,14 +374,36 @@
             lucide.createIcons();
             
             requestAnimationFrame(() => { toast.classList.remove('translate-x-full', 'opacity-0'); });
-            
-            setTimeout(() => {
-                toast.classList.add('translate-x-full', 'opacity-0');
-                setTimeout(() => toast.remove(), 300);
-            }, 4000);
+            setTimeout(() => { toast.classList.add('translate-x-full', 'opacity-0'); setTimeout(() => toast.remove(), 300); }, 4000);
         }
 
-        // --- PASSWORD RECOVERY LOGIC ---
+        // --- UI SEARCH CLEARS ---
+        function toggleAuditClearBtn() {
+            const input = document.getElementById('notif-search');
+            const btn = document.getElementById('clear-audit-btn');
+            if (input.value) btn.classList.remove('hidden');
+            else btn.classList.add('hidden');
+        }
+        function clearAuditSearch() {
+            const input = document.getElementById('notif-search');
+            input.value = '';
+            toggleAuditClearBtn();
+            filterLogs();
+        }
+
+        function toggleFlightClearBtn() {
+            const input = document.getElementById('search-input');
+            const btn = document.getElementById('clear-flight-btn');
+            if (input.value) btn.classList.remove('hidden');
+            else btn.classList.add('hidden');
+        }
+        function clearFlightSearch() {
+            const input = document.getElementById('search-input');
+            input.value = '';
+            toggleFlightClearBtn();
+            applyFilter();
+        }
+
         function toggleForgotMode(showForgot) {
             const loginForm = document.getElementById('login-form-container');
             const forgotForm = document.getElementById('forgot-form-container');
@@ -394,10 +426,7 @@
             lucide.createIcons();
 
             try {
-                // redirectTo ensures Supabase brings them right back to this exact page
-                const { error } = await _supabase.auth.resetPasswordForEmail(email, {
-                    redirectTo: window.location.origin + window.location.pathname
-                });
+                const { error } = await _supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + window.location.pathname });
                 if (error) throw error;
                 showToast('If the email exists, a reset link was sent.', 'success');
                 toggleForgotMode(false);
@@ -409,7 +438,6 @@
             }
         }
 
-        // Listener to catch when user clicks the link in their email
         _supabase.auth.onAuthStateChange(async (event, session) => {
             if (event === 'PASSWORD_RECOVERY') {
                 document.getElementById('login-screen').classList.add('hidden');
@@ -430,17 +458,15 @@
             try {
                 const { error } = await _supabase.auth.updateUser({ password: newPassword });
                 if (error) throw error;
-                
                 showToast('Password updated successfully.', 'success');
                 document.getElementById('update-password-screen').classList.add('hidden');
-                checkSession(); // Re-route to dashboard
+                checkSession(); 
             } catch (err) {
                 showToast('Failed to update password.', 'error');
                 btn.disabled = false;
                 btn.innerText = 'Update & Sign In';
             }
         }
-
 
         function formatFlightZulu(date) {
             return `${String(date.getUTCDate()).padStart(2, '0')} ${MONTH_NAMES[date.getUTCMonth()]} ${date.getUTCFullYear()} ${String(date.getUTCHours()).padStart(2, '0')}:${String(date.getUTCMinutes()).padStart(2, '0')}`;
@@ -515,7 +541,6 @@
             }
         }
 
-        // --- SECURED LOGIN LOGIC ---
         async function handleLogin() {
             const emailInput = document.getElementById('email');
             const passwordInput = document.getElementById('password');
@@ -524,10 +549,7 @@
             const email = emailInput.value.trim();
             const password = passwordInput.value;
 
-            if (!email || !password) {
-                showToast('Please enter both email and password.', 'error');
-                return;
-            }
+            if (!email || !password) { showToast('Please enter both email and password.', 'error'); return; }
 
             loginBtn.disabled = true;
             loginBtn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin inline mr-2"></i> Authenticating...';
@@ -536,18 +558,13 @@
             try {
                 const { error } = await _supabase.auth.signInWithPassword({ email, password });
                 if (error) throw error;
-                
-                emailInput.value = '';
-                passwordInput.value = '';
-                
+                emailInput.value = ''; passwordInput.value = '';
                 checkSession();
                 showToast('Authentication Successful');
             } catch (err) {
                 showToast('Invalid login credentials or account locked.', 'error');
-                console.error(err);
             } finally {
-                loginBtn.disabled = false;
-                loginBtn.innerText = 'Sign In';
+                loginBtn.disabled = false; loginBtn.innerText = 'Sign In';
             }
         }
 
@@ -571,9 +588,7 @@
         async function createLog(details) {
             const { data: { session } } = await _supabase.auth.getSession();
             if (!session?.user?.email) return;
-            try {
-                await _supabase.from('vvip_logs').insert([{ user_email: session.user.email, action_details: details }]);
-            } catch(e) { console.error("Logging failed", e); }
+            try { await _supabase.from('vvip_logs').insert([{ user_email: session.user.email, action_details: details }]); } catch(e) {}
         }
 
         function updateUtcClock() {
@@ -610,6 +625,8 @@
             const id = cardId.replace('card-', '');
             const remarksPanel = document.getElementById(`remarks-${id}`);
             if (remarksPanel) remarksPanel.classList.add('translate-y-full');
+            const detailsPanel = document.getElementById(`details-${id}`);
+            if (detailsPanel) detailsPanel.classList.add('translate-y-full');
 
             if (flipCardTimers[cardId]) { clearTimeout(flipCardTimers[cardId]); delete flipCardTimers[cardId]; }
         }
@@ -617,18 +634,35 @@
         function toggleRemarks(id, event) {
             if (event) event.stopPropagation();
             const panel = document.getElementById(`remarks-${id}`);
-            if (panel) {
-                panel.classList.toggle('translate-y-full');
+            if (panel) panel.classList.toggle('translate-y-full');
+        }
+        
+        function toggleGroupDetails(id, event) {
+            if (event) event.stopPropagation();
+            const panel = document.getElementById(`details-${id}`);
+            if (panel) panel.classList.toggle('translate-y-full');
+        }
+
+        function togglePendingBlock(isChecked) {
+            const permitInput = document.getElementById('new-permit-no');
+            if (isChecked) {
+                permitInput.disabled = true;
+                permitInput.classList.add('opacity-50');
+                permitInput.value = 'AWAITED';
+            } else {
+                permitInput.disabled = false;
+                permitInput.classList.remove('opacity-50');
+                if (permitInput.value === 'AWAITED') permitInput.value = '';
             }
         }
 
         function scheduleNextLeg(id, event) {
             if (event) event.stopPropagation();
-            
             const previousFlight = allFlights.find(x => x.id === id);
             if (!previousFlight) return;
 
-            closeFlipCard(`card-${id}`);
+            const possibleGroupCard = document.querySelector('.card-flipped');
+            if (possibleGroupCard) possibleGroupCard.classList.remove('card-flipped');
 
             editingFlightId = null; 
             document.getElementById('flight-form').reset(); 
@@ -652,7 +686,18 @@
             document.getElementById('new-etd').value = ''; 
             document.getElementById('utc-preview').classList.add('hidden');
             
-            document.getElementById('new-permit-no').value = '';
+            const isPending = previousFlight.permit_number?.startsWith('PENDING-BLOCK-');
+            if (isPending) {
+                document.getElementById('is-pending-block').checked = true;
+                togglePendingBlock(true);
+                document.getElementById('new-permit-no').dataset.pendingId = previousFlight.permit_number;
+            } else {
+                document.getElementById('is-pending-block').checked = false;
+                togglePendingBlock(false);
+                document.getElementById('new-permit-no').value = previousFlight.permit_number || '';
+                delete document.getElementById('new-permit-no').dataset.pendingId;
+            }
+            
             document.getElementById('new-remarks').value = '';
             document.getElementById('new-catering').checked = false;
             document.getElementById('new-transport').checked = false;
@@ -682,7 +727,10 @@
             ].filter(Boolean).join(', ') || 'NIL';
 
             const flightStatus = f.status.toUpperCase();
-            const permitStatus = f.permit_number ? `${f.permit_number} ${f.permit_ready ? '(APPROVED)' : '(AWAITED)'}` : (f.permit_ready ? 'APPROVED (ON FILE)' : 'AWAITED');
+            
+            const isPendingBlock = f.permit_number?.startsWith('PENDING-BLOCK-');
+            const displayPermit = isPendingBlock ? 'AWAITED (PENDING BLOCK)' : `${f.permit_number} ${f.permit_ready ? '(VERIFIED)' : '(AWAITED)'}`;
+
             let slotStr = f.mission_type !== 'overflying' ? (f.slot_ready ? 'APPROVED' : 'AWAITED') : 'N/A';
 
             const tableData = [
@@ -695,7 +743,7 @@
                 ['SCHEDULE', `MISSION: ${f.mission_type.toUpperCase()}\nDEP: ${f.origin_icao} / ETD: ${f.etd_zulu} ZULU\nARR: ${f.dest_icao}`],
                 ['CREW / PAX', `CREW: ${f.crew_count || 'TBA'}  /  PAX: ${f.pax_count || 'TBA'}`],
                 ['FLIGHT STATUS', flightStatus],
-                ['PERMIT NUMBER', permitStatus],
+                ['PERMIT NUMBER', displayPermit],
                 ['SLOT / PARKING', slotStr],
                 ['GROUND HANDLING', f.mission_type === 'overflying' ? 'N/A' : (f.ground_handling || 'TBA')],
                 ['CREW VISA', f.mission_type === 'overflying' ? 'N/A' : (f.crew_visa_ready ? 'APPROVED' : 'AWAITED')],
@@ -717,12 +765,67 @@
             showToast(`PDF Generated for ${f.tail_number}`);
         }
 
+        function downloadGroupFlightSummary(tail, permit, event) {
+            if (event) event.stopPropagation();
+            let group = allFlights.filter(x => x.tail_number === tail && x.permit_number === permit && x.mission_type === 'overflying');
+            if (!group.length) return;
+            group.sort((a, b) => parseFlightDate(a) - parseFlightDate(b));
+
+            const baseF = group[0];
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'mm', 'a4');
+
+            doc.setFontSize(14); doc.setFont("helvetica", "bold");
+            doc.text("VVIP FLIGHT PVT. LTD.", 14, 20);
+            doc.setFontSize(11);
+            doc.text("BLOCK PERMIT SUMMARY REPORT", 130, 20);
+            doc.setLineWidth(0.5); doc.line(14, 23, 196, 23);
+
+            const isPendingBlock = baseF.permit_number?.startsWith('PENDING-BLOCK-');
+            const permitStatus = isPendingBlock ? 'AWAITED (PENDING BLOCK)' : `${baseF.permit_number} ${baseF.permit_ready ? '(VERIFIED)' : '(AWAITED)'}`;
+
+            let scheduleStr = `MISSION: OVERFLYING (BLOCK PERMIT - ${group.length} LEGS)\n\n`;
+            group.forEach((leg, i) => {
+                scheduleStr += `LEG ${i+1}: DEP: ${leg.origin_icao} / ETD: ${leg.etd_zulu} ZULU / ARR: ${leg.dest_icao}\n`;
+            });
+
+            let combinedRemarks = group.map((l, i) => l.remarks ? `L${i+1}: ${l.remarks}` : null).filter(Boolean).join('\n') || 'No remarks added.';
+
+            const tableData = [
+                ['OPERATOR', baseF.operator_name || 'NIL'],
+                ['AIRCRAFT TYPE', baseF.aircraft_type || 'NIL'],
+                ['REGISTRATION', baseF.tail_number || 'NIL'],
+                ['CALL SIGN', baseF.call_sign || 'TBA'],
+                ['CAPTAIN', baseF.captain || 'TBA'],
+                ['SCHEDULE', scheduleStr.trim()],
+                ['CREW / PAX', `CREW: ${baseF.crew_count || 'TBA'}  /  PAX: ${baseF.pax_count || 'TBA'}`],
+                ['OVERFLIGHT COUNTRY', baseF.country || 'N/A'],
+                ['PERMIT NUMBER', permitStatus],
+                ['COMBINED REMARKS', combinedRemarks]
+            ];
+
+            doc.autoTable({
+                startY: 28, body: tableData, theme: 'grid',
+                styles: { font: 'helvetica', fontSize: 9, textColor: [30, 41, 59], lineColor: [203, 213, 225], lineWidth: 0.1, cellPadding: 4 },
+                columnStyles: { 0: { fontStyle: 'bold', fillColor: [248, 250, 252], cellWidth: 50 }, 1: { cellWidth: 'auto' } }
+            });
+
+            const finalY = doc.lastAutoTable.finalY || 200;
+            doc.setFontSize(8); doc.setFont("helvetica", "normal");
+            doc.text(`Generated by VVIP Ops Center at ${new Date().toISOString().slice(0, 16).replace('T', ' ')} UTC`, 14, finalY + 10);
+            
+            const fileNamePermit = isPendingBlock ? 'PENDING' : baseF.permit_number;
+            doc.save(`VVIP_BLOCK_${baseF.tail_number}_${fileNamePermit}.pdf`);
+            showToast(`Block PDF Generated for ${baseF.tail_number}`);
+        }
+
         function setMissionType(type) {
             selectedMissionType = type;
             const landBtn = document.getElementById('type-landing'), overBtn = document.getElementById('type-overflying'), countryField = document.getElementById('country-field'), countryInput = document.getElementById('new-country'), servicesFields = document.getElementById('services-fields');
             const groundHandlingInput = document.getElementById('new-ground-handling');
             const mtowInput = document.getElementById('new-mtow');
             const mtowLabel = document.getElementById('mtow-label');
+            const pendingBlockContainer = document.getElementById('pending-block-container');
             
             if (type === 'landing') {
                 landBtn.className = "flex-1 py-2 rounded-md text-xs font-semibold transition-all bg-slate-800 text-white shadow-sm";
@@ -734,6 +837,10 @@
                 
                 mtowLabel.innerText = "MTOW (kg)";
                 mtowInput.required = true;
+                
+                pendingBlockContainer.classList.add('hidden');
+                document.getElementById('is-pending-block').checked = false;
+                togglePendingBlock(false);
             } else {
                 overBtn.className = "flex-1 py-2 rounded-md text-xs font-semibold transition-all bg-slate-800 text-white shadow-sm";
                 landBtn.className = "flex-1 py-2 rounded-md text-xs font-medium transition-all text-slate-400 hover:text-slate-200 hover:bg-slate-800/50";
@@ -746,6 +853,8 @@
                 mtowInput.required = false;
                 
                 document.getElementById('new-catering').checked = false; document.getElementById('new-transport').checked = false; document.getElementById('new-fuel').checked = false;
+                
+                pendingBlockContainer.classList.remove('hidden');
             }
         }
 
@@ -758,9 +867,9 @@
             const value = checkboxElement.checked;
 
             if (field === 'permit_ready' && value === true) {
-                if (!f.permit_number || f.permit_number.trim() === '') {
+                if (!f.permit_number || f.permit_number.trim() === '' || f.permit_number.startsWith('PENDING-BLOCK-')) {
                     checkboxElement.checked = false;
-                    showToast("COMPLIANCE ERROR: Cannot verify Permit Status without a valid Permit Number.", 'error');
+                    showToast("COMPLIANCE ERROR: Cannot verify Permit Status without an approved Permit Number.", 'error');
                     return;
                 }
             }
@@ -777,7 +886,13 @@
             if (!ok) { checkboxElement.checked = !value; return; }
             
             const niceFieldName = field.replace('_ready', '').replace('_', ' ').toUpperCase();
-            createLog(`Flight ${f.tail_number}: Changed ${niceFieldName} to ${value ? 'COMPLETED' : 'PENDING'}`);
+            
+            const displayPermit = f.permit_number?.startsWith('PENDING-BLOCK-') ? 'PENDING BLOCK' : f.permit_number;
+            const blockPrefix = (f.mission_type === 'overflying' && f.permit_number) 
+                ? `Block ${displayPermit} (${f.tail_number}) Leg ${f.origin_icao}➔${f.dest_icao}` 
+                : `Flight ${f.tail_number}`;
+            
+            createLog(`${blockPrefix}: Changed ${niceFieldName} to ${value ? 'COMPLETED' : 'PENDING'}`);
         }
 
         async function updateStatus(id, stat) { 
@@ -787,25 +902,31 @@
             const ok = await safeUpdateFlight(id, { status: stat });
             if (!ok) return;
             
-            createLog(`Flight ${f.tail_number}: Status manually set to ${stat.toUpperCase()}`);
+            const displayPermit = f.permit_number?.startsWith('PENDING-BLOCK-') ? 'PENDING BLOCK' : f.permit_number;
+            const blockPrefix = (f.mission_type === 'overflying' && f.permit_number) 
+                ? `Block ${displayPermit} (${f.tail_number}) Leg ${f.origin_icao}➔${f.dest_icao}` 
+                : `Flight ${f.tail_number}`;
+                
+            createLog(`${blockPrefix}: Status set to ${stat.toUpperCase()}`);
         }
 
         async function deleteFlight(id) {
-            if (currentUserRole !== 'admin') {
-                showToast("ACCESS DENIED: Administrator Privileges Required", "error");
-                return;
-            }
+            if (currentUserRole !== 'admin') { showToast("ACCESS DENIED: Administrator Privileges Required", "error"); return; }
             const f = allFlights.find(x => x.id === id);
             if (!f) return;
             if (confirm(`PURGE MISSION? This action cannot be undone.`)) {
                 try {
                     const { error } = await _supabase.from('vvip_flights').delete().eq('id', id);
                     if (error) throw error;
-                    createLog(`Flight ${f.tail_number} PURGED from system by admin`);
+                    
+                    const displayPermit = f.permit_number?.startsWith('PENDING-BLOCK-') ? 'PENDING BLOCK' : f.permit_number;
+                    const blockPrefix = (f.mission_type === 'overflying' && f.permit_number) 
+                        ? `Block ${displayPermit} (${f.tail_number}) Leg ${f.origin_icao}➔${f.dest_icao}` 
+                        : `Flight ${f.tail_number}`;
+                        
+                    createLog(`${blockPrefix} PURGED from system by admin`);
                     showToast(`Mission ${f.tail_number} deleted.`);
-                } catch(err) {
-                    showToast(err.message, 'error');
-                }
+                } catch(err) { showToast(err.message, 'error'); }
             }
         }
 
@@ -817,6 +938,7 @@
             setMissionType('landing'); 
             document.getElementById('new-etd').value = '';
             document.getElementById('utc-preview').classList.add('hidden');
+            delete document.getElementById('new-permit-no').dataset.pendingId;
             document.getElementById('modal').classList.remove('hidden'); 
         }
 
@@ -824,7 +946,7 @@
             editingFlightId = id; const f = allFlights.find(x => x.id === id);
             if (!f) return;
             document.getElementById('modal-title').innerText = "Mission Config";
-            document.getElementById('mission-type-container').classList.add('hidden');
+            document.getElementById('mission-type-container').classList.remove('hidden');
             setMissionType(f.mission_type || 'landing');
             
             document.getElementById('new-tail').value = f.tail_number;
@@ -838,7 +960,19 @@
             document.getElementById('new-captain').value = f.captain || '';
             document.getElementById('new-crew-count').value = f.crew_count || '';
             document.getElementById('new-pax-count').value = f.pax_count || '';
-            document.getElementById('new-permit-no').value = f.permit_number || '';
+            
+            const isPending = f.permit_number?.startsWith('PENDING-BLOCK-');
+            if (isPending) {
+                document.getElementById('is-pending-block').checked = true;
+                togglePendingBlock(true);
+                document.getElementById('new-permit-no').dataset.pendingId = f.permit_number;
+            } else {
+                document.getElementById('is-pending-block').checked = false;
+                togglePendingBlock(false);
+                document.getElementById('new-permit-no').value = f.permit_number || '';
+                delete document.getElementById('new-permit-no').dataset.pendingId;
+            }
+
             document.getElementById('new-ground-handling').value = f.ground_handling || '';
             document.getElementById('new-catering').checked = f.catering_service || false;
             document.getElementById('new-transport').checked = f.transport_service || false;
@@ -869,6 +1003,14 @@
             if (selectedMissionType === 'overflying' && !document.getElementById('new-country').value.trim()) { showToast("COUNTRY IS REQUIRED FOR OVERFLYING MISSIONS.", "error"); return; }
             if (currentUserRole === 'ops' && d < now) { showToast("STRICT PROTOCOL: BACKDATED FLIGHTS ARE PROHIBITED.", "error"); return; }
 
+            let finalPermit = document.getElementById('new-permit-no').value.trim().toUpperCase() || null;
+            if (selectedMissionType === 'overflying' && document.getElementById('is-pending-block').checked) {
+                const existingId = document.getElementById('new-permit-no').dataset.pendingId;
+                finalPermit = existingId ? existingId : `PENDING-BLOCK-${Date.now().toString(36).toUpperCase()}-${Math.floor(Math.random()*1000)}`;
+            } else {
+                if (finalPermit === 'AWAITED') finalPermit = null; 
+            }
+
             const payload = { 
                 tail_number: tail, etd_zulu: formatFlightZulu(d), 
                 origin_icao: document.getElementById('new-origin').value.trim().toUpperCase(), dest_icao: document.getElementById('new-dest').value.trim().toUpperCase(), 
@@ -880,7 +1022,7 @@
                 captain: document.getElementById('new-captain').value.trim().toUpperCase() || null,
                 crew_count: document.getElementById('new-crew-count').value ? parseInt(document.getElementById('new-crew-count').value) : null,
                 pax_count: document.getElementById('new-pax-count').value ? parseInt(document.getElementById('new-pax-count').value) : null,
-                permit_number: document.getElementById('new-permit-no').value.trim().toUpperCase() || null,
+                permit_number: finalPermit,
                 ground_handling: selectedMissionType === 'landing' ? document.getElementById('new-ground-handling').value.trim().toUpperCase() || null : null,
                 catering_service: selectedMissionType === 'landing' ? document.getElementById('new-catering').checked : false,
                 transport_service: selectedMissionType === 'landing' ? document.getElementById('new-transport').checked : false,
@@ -891,33 +1033,90 @@
             if (editingFlightId) { 
                 const old = allFlights.find(x => x.id === editingFlightId);
                 let changes = [];
-                if (old.mission_type !== payload.mission_type) changes.push(`Mission changed to ${payload.mission_type.toUpperCase()}`);
-                if (old.tail_number !== payload.tail_number) changes.push(`Reg: ${old.tail_number} -> ${payload.tail_number}`);
-                if (old.etd_zulu !== payload.etd_zulu) changes.push(`Time: ${old.etd_zulu} -> ${payload.etd_zulu}`);
-                if (old.origin_icao !== payload.origin_icao) changes.push(`Origin: ${old.origin_icao} -> ${payload.origin_icao}`);
-                if (old.dest_icao !== payload.dest_icao) changes.push(`Dest: ${old.dest_icao} -> ${payload.dest_icao}`);
-                if (old.aircraft_type !== payload.aircraft_type) changes.push(`Aircraft: ${old.aircraft_type} -> ${payload.aircraft_type}`);
-                if (old.mtow !== payload.mtow) changes.push(`MTOW: ${old.mtow} -> ${payload.mtow}`);
-                if (old.operator_name !== payload.operator_name) changes.push(`Operator: ${old.operator_name} -> ${payload.operator_name}`);
-                if (old.call_sign !== payload.call_sign) changes.push(`Callsign updated`);
-                if (old.captain !== payload.captain) changes.push(`Captain updated`);
-                if (old.permit_number !== payload.permit_number) changes.push(`Permit No updated`);
-                if (selectedMissionType === 'landing' && old.ground_handling !== payload.ground_handling) changes.push(`Handling updated`);
-                if (old.remarks !== payload.remarks) changes.push(`Remarks updated`);
+                const vStr = (v) => (v === null || v === undefined || v === '') ? 'N/A' : (String(v).startsWith('PENDING-BLOCK-') ? 'PENDING BLOCK' : String(v));
+
+                if (old.mission_type !== payload.mission_type) changes.push(`Type: ${vStr(old.mission_type).toUpperCase()} -> ${vStr(payload.mission_type).toUpperCase()}`);
+                if (old.tail_number !== payload.tail_number) changes.push(`Reg: ${vStr(old.tail_number)} -> ${vStr(payload.tail_number)}`);
+                if (old.etd_zulu !== payload.etd_zulu) changes.push(`Time: ${vStr(old.etd_zulu)} -> ${vStr(payload.etd_zulu)}`);
+                if (old.origin_icao !== payload.origin_icao) changes.push(`Origin: ${vStr(old.origin_icao)} -> ${vStr(payload.origin_icao)}`);
+                if (old.dest_icao !== payload.dest_icao) changes.push(`Dest: ${vStr(old.dest_icao)} -> ${vStr(payload.dest_icao)}`);
+                if (old.aircraft_type !== payload.aircraft_type) changes.push(`A/C: ${vStr(old.aircraft_type)} -> ${vStr(payload.aircraft_type)}`);
+                if (old.mtow !== payload.mtow) changes.push(`MTOW: ${vStr(old.mtow)} -> ${vStr(payload.mtow)}`);
+                if (old.operator_name !== payload.operator_name) changes.push(`Op: ${vStr(old.operator_name)} -> ${vStr(payload.operator_name)}`);
+                if (old.call_sign !== payload.call_sign) changes.push(`Callsign: ${vStr(old.call_sign)} -> ${vStr(payload.call_sign)}`);
+                if (old.captain !== payload.captain) changes.push(`Captain: ${vStr(old.captain)} -> ${vStr(payload.captain)}`);
+                if (old.crew_count !== payload.crew_count) changes.push(`Crew: ${vStr(old.crew_count)} -> ${vStr(payload.crew_count)}`);
+                if (old.pax_count !== payload.pax_count) changes.push(`Pax: ${vStr(old.pax_count)} -> ${vStr(payload.pax_count)}`);
+                if (old.permit_number !== payload.permit_number) changes.push(`Permit: ${vStr(old.permit_number)} -> ${vStr(payload.permit_number)}`);
+                if (old.country !== payload.country) changes.push(`Country: ${vStr(old.country)} -> ${vStr(payload.country)}`);
+                if (selectedMissionType === 'landing' && old.ground_handling !== payload.ground_handling) changes.push(`Handling: ${vStr(old.ground_handling)} -> ${vStr(payload.ground_handling)}`);
+                if (selectedMissionType === 'landing' && old.catering_service !== payload.catering_service) changes.push(`Catering: ${old.catering_service ? 'Yes' : 'No'} -> ${payload.catering_service ? 'Yes' : 'No'}`);
+                if (selectedMissionType === 'landing' && old.transport_service !== payload.transport_service) changes.push(`Transport: ${old.transport_service ? 'Yes' : 'No'} -> ${payload.transport_service ? 'Yes' : 'No'}`);
+                if (selectedMissionType === 'landing' && old.fuel_service !== payload.fuel_service) changes.push(`Fuel: ${old.fuel_service ? 'Yes' : 'No'} -> ${payload.fuel_service ? 'Yes' : 'No'}`);
+                if (old.remarks !== payload.remarks) changes.push(`Remarks: ${vStr(old.remarks)} -> ${vStr(payload.remarks)}`);
                 
                 const ok = await safeUpdateFlight(editingFlightId, payload); 
                 if (!ok) return;
+
+                let permitAppliedLog = "";
+                if (old.permit_number && old.permit_number.startsWith('PENDING-BLOCK-') && payload.permit_number && !payload.permit_number.startsWith('PENDING-BLOCK-')) {
+                    await _supabase.from('vvip_flights')
+                        .update({ permit_number: payload.permit_number })
+                        .eq('tail_number', payload.tail_number)
+                        .eq('permit_number', old.permit_number)
+                        .neq('id', editingFlightId);
+                        
+                    permitAppliedLog = `Block Permit APPROVED & APPLIED: ${payload.permit_number} attached to all linked legs for ${payload.tail_number}`;
+                    changes.push(`Permit finalized to ${payload.permit_number}`);
+                }
                 
                 if (changes.length > 0) {
-                    createLog(`Flight ${payload.tail_number} config updated: ${changes.join(' | ')}`);
+                    const displayPermit = payload.permit_number?.startsWith('PENDING-BLOCK-') ? 'PENDING BLOCK' : payload.permit_number;
+                    const blockPrefix = (payload.mission_type === 'overflying' && payload.permit_number) 
+                        ? `Block ${displayPermit} (${payload.tail_number}) Leg ${payload.origin_icao}➔${payload.dest_icao}` 
+                        : `Flight ${payload.tail_number}`;
+                    createLog(`${blockPrefix} updated | ${changes.join(' | ')}`);
                 }
+
+                if (permitAppliedLog) {
+                    createLog(permitAppliedLog); 
+                }
+
                 showToast('Mission Configuration Saved');
             }
             else { 
                 try {
                     const { error } = await _supabase.from('vvip_flights').insert([{ ...payload, status: 'Pending' }]); 
                     if (error) throw error;
-                    createLog(`Flight ${tail} newly scheduled for ${payload.origin_icao} to ${payload.dest_icao}`); 
+                    
+                    let isNewLeg = false;
+                    let legCount = 1;
+                    let isPendingBlock = payload.permit_number?.startsWith('PENDING-BLOCK-');
+
+                    if (payload.mission_type === 'overflying' && payload.permit_number) {
+                        const existingLegs = allFlights.filter(x => x.tail_number === payload.tail_number && x.permit_number === payload.permit_number && x.mission_type === 'overflying');
+                        if (existingLegs.length > 0) {
+                            isNewLeg = true;
+                            legCount = existingLegs.length + 1;
+                        }
+                    }
+
+                    const displayPermit = isPendingBlock ? 'PENDING BLOCK' : payload.permit_number;
+
+                    let flightDetails = "";
+                    if (isNewLeg) {
+                        flightDetails = `Block Permit ${displayPermit} (${tail}): Added Leg ${legCount} [${payload.origin_icao} ➔ ${payload.dest_icao}]`;
+                    } else if (isPendingBlock) {
+                        flightDetails = `Pending Block Permit created: ${tail} (${payload.aircraft_type}) | Leg 1: ${payload.origin_icao} ➔ ${payload.dest_icao}`;
+                    } else {
+                        flightDetails = `Flight scheduled: ${tail} (${payload.aircraft_type})`;
+                        if(payload.operator_name) flightDetails += ` | Op: ${payload.operator_name}`;
+                        if(payload.mission_type === 'overflying' && payload.permit_number) flightDetails += ` | Block Permit: ${displayPermit}`;
+                        flightDetails += ` | ${payload.origin_icao} ➔ ${payload.dest_icao}`;
+                        if(payload.crew_count || payload.pax_count) flightDetails += ` | Crew: ${payload.crew_count || 0}, Pax: ${payload.pax_count || 0}`;
+                    }
+                    
+                    createLog(flightDetails); 
                     showToast('New Mission Scheduled');
                 } catch(err) {
                     showToast(err.message, 'error');
@@ -951,9 +1150,9 @@
             const search = searchInput.value.toLowerCase();
             const filtered = allLogs.filter(log => (log.action_details || '').toLowerCase().includes(search) || (log.user_email || '').toLowerCase().includes(search));
             container.innerHTML = filtered.map(log => `
-                <div class="bg-slate-800 border-l-[3px] border-sky-500 p-3 rounded-r-lg mb-2">
-                    <div class="flex justify-between items-center mb-1.5"><span class="font-bold text-slate-300 text-[10px] uppercase tracking-wider">${safeText((log.user_email || '').split('@')[0])}</span><span class="text-[9px] text-slate-500 font-medium">${formatZuluDate(log.created_at)}</span></div>
-                    <p class="text-[11px] text-slate-400 leading-relaxed">${safeText(log.action_details || '')}</p>
+                <div class="bg-slate-800 border-l-[3px] border-sky-500 p-3.5 rounded-r-lg mb-2.5">
+                    <div class="flex justify-between items-center mb-2"><span class="font-bold text-slate-300 text-[10px] uppercase tracking-wider">${safeText((log.user_email || '').split('@')[0])}</span><span class="text-[9px] text-slate-500 font-medium">${formatZuluDate(log.created_at)}</span></div>
+                    <p class="text-xs text-slate-400 leading-relaxed">${safeText(log.action_details || '')}</p>
                 </div>
             `).join('');
         }
@@ -1009,11 +1208,64 @@
                 }
             });
 
+            const overflightGroupsActive = {};
+            const overflightGroupsCompleted = {};
+            const processedActiveIds = new Set();
+            const processedCompletedIds = new Set();
+
             filteredFlights.forEach(f => {
                 const meta = getFlightMeta(f, now);
                 if (meta.invalidDate) return;
-                if (meta.isArchived) completedObjects.push({ html: generateCard(f, false, false, true, false, false), date: meta.flightDate });
-                else activeObjects.push({ html: generateCard(f, meta.isRisk, meta.isPermitPending, false, false, meta.isInProgress), date: meta.flightDate, inProgress: meta.isInProgress });
+
+                if (f.mission_type === 'overflying' && f.permit_number) {
+                    const key = `${f.tail_number}_${f.permit_number}`;
+                    if (meta.isArchived) {
+                        if (!overflightGroupsCompleted[key]) overflightGroupsCompleted[key] = [];
+                        overflightGroupsCompleted[key].push({ f, meta });
+                    } else {
+                        if (!overflightGroupsActive[key]) overflightGroupsActive[key] = [];
+                        overflightGroupsActive[key].push({ f, meta });
+                    }
+                }
+            });
+
+            filteredFlights.forEach(f => {
+                const meta = getFlightMeta(f, now);
+                if (meta.invalidDate) return;
+
+                if (f.mission_type === 'overflying' && f.permit_number) {
+                    const key = `${f.tail_number}_${f.permit_number}`;
+                    if (meta.isArchived) {
+                        if (processedCompletedIds.has(key)) return;
+                        processedCompletedIds.add(key);
+                        const group = overflightGroupsCompleted[key];
+                        if (group.length > 1) {
+                            group.sort((a,b) => a.meta.flightDate - b.meta.flightDate);
+                            completedObjects.push({ html: generateGroupCard(group, true, false, false, false), date: group[0].meta.flightDate });
+                        } else {
+                            completedObjects.push({ html: generateCard(f, false, false, true, false, false), date: meta.flightDate });
+                        }
+                    } else {
+                        if (processedActiveIds.has(key)) return;
+                        processedActiveIds.add(key);
+                        const group = overflightGroupsActive[key];
+                        if (group.length > 1) {
+                            const hasRisk = group.some(g => g.meta.isRisk);
+                            const hasPermitPending = group.some(g => g.meta.isPermitPending);
+                            const hasInProgress = group.some(g => g.meta.isInProgress);
+                            group.sort((a,b) => a.meta.flightDate - b.meta.flightDate);
+                            activeObjects.push({ html: generateGroupCard(group, false, hasRisk, hasPermitPending, hasInProgress), date: group[0].meta.flightDate, inProgress: hasInProgress });
+                        } else {
+                            activeObjects.push({ html: generateCard(f, meta.isRisk, meta.isPermitPending, false, false, meta.isInProgress), date: meta.flightDate, inProgress: meta.isInProgress });
+                        }
+                    }
+                } else {
+                    if (meta.isArchived) {
+                        completedObjects.push({ html: generateCard(f, false, false, true, false, false), date: meta.flightDate });
+                    } else {
+                        activeObjects.push({ html: generateCard(f, meta.isRisk, meta.isPermitPending, false, false, meta.isInProgress), date: meta.flightDate, inProgress: meta.isInProgress });
+                    }
+                }
             });
 
             activeObjects.sort((a,b) => (a.inProgress && !b.inProgress) ? -1 : (!a.inProgress && b.inProgress) ? 1 : a.date - b.date);
@@ -1024,6 +1276,160 @@
             document.getElementById('archive-load-more-container').classList.toggle('hidden', completedObjects.length <= archiveLimit);
             if (currentUserRole === 'admin') { document.getElementById('stat-week').innerText = weekT.toString(); document.getElementById('stat-month').innerText = monthT.toString(); document.getElementById('stat-year').innerText = yearT.toString(); document.getElementById('stat-total').innerText = allT.toString(); }
             lucide.createIcons();
+        }
+
+        function generateGroupCard(groupItems, isArchived, hasRisk, hasPermitPending, hasInProgress) {
+            const baseF = groupItems[0].f;
+            const lastF = groupItems[groupItems.length-1].f;
+            const groupId = `group-${safeText(baseF.tail_number)}-${safeText(baseF.permit_number).replace(/[^a-zA-Z0-9]/g, '')}`;
+
+            let borderClass = 'border-slate-800'; 
+            if (isArchived) borderClass = 'border-slate-800 opacity-70';
+            else if (hasInProgress) borderClass = 'border-sky-500/50 shadow-[0_0_20px_rgba(14,165,233,0.15)]';
+            else if (hasRisk) borderClass = 'border-red-500/40 shadow-[0_0_15px_rgba(239,68,68,0.1)]';
+            else if (hasPermitPending) borderClass = 'border-orange-500/40 shadow-[0_0_15px_rgba(249,115,22,0.1)]';
+            else borderClass = 'border-emerald-500/30';
+
+            let pillClass = 'bg-slate-800 text-slate-300';
+            if (isArchived) pillClass = 'bg-slate-800 text-slate-400';
+            else if (hasInProgress) pillClass = 'bg-sky-500/10 text-sky-400 border border-sky-500/20 animate-pulse';
+            else if (hasRisk) pillClass = 'bg-red-500/10 text-red-400 border border-red-500/20';
+            else if (hasPermitPending) pillClass = 'bg-orange-500/10 text-orange-400 border border-orange-500/20';
+            else pillClass = 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
+
+            const statusText = isArchived ? 'ARCHIVED' : (hasInProgress ? 'IN PROGRESS' : (hasRisk ? 'ACTION REQ' : (hasPermitPending ? 'PERMIT PEND' : 'ALL READY')));
+            const overflyBadge = `<span class="ml-2 px-1.5 py-0.5 rounded-sm bg-slate-800 border border-slate-700 text-[9px] font-semibold text-slate-400 uppercase tracking-wider shrink-0 align-middle">${safeText(baseF.country || 'N/A')}</span>`;
+
+            const isPendingBlock = baseF.permit_number && baseF.permit_number.startsWith('PENDING-BLOCK-');
+            const displayPermit = isPendingBlock ? 'PERMIT AWAITED' : safeText(baseF.permit_number);
+
+            const frontCard = `
+                <div class="p-4 sm:p-6 flex-1 flex flex-col h-full bg-slate-900 rounded-[1rem]">
+                    <div class="flex justify-between items-start mb-4 gap-3">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center mb-1.5">
+                                <h2 class="text-xl font-bold text-white tracking-tight leading-none truncate">${safeText(baseF.tail_number)}</h2>
+                                ${overflyBadge}
+                            </div>
+                            <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-widest truncate">${safeText(baseF.operator_name || 'PRIVATE')}</p>
+                        </div>
+                        <div class="flex flex-col items-end gap-2 shrink-0">
+                            <span class="px-2.5 py-1 rounded-md text-[9px] font-bold tracking-wider ${pillClass} whitespace-nowrap">${statusText}</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-950 rounded-xl border border-sky-500/20 p-5 mb-4 flex flex-col items-center justify-center relative overflow-hidden h-28">
+                        <span class="text-[10px] font-bold text-sky-400/80 uppercase tracking-widest mb-1.5"><i data-lucide="layers" class="w-3 h-3 inline mr-1 -mt-0.5"></i> Block Permit</span>
+                        <div class="text-2xl font-mono font-bold ${isPendingBlock ? 'text-amber-400 text-xl' : 'text-white'} tracking-wider">${displayPermit}</div>
+                        <div class="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded absolute bottom-3 right-3 shadow-sm">${groupItems.length} LEGS</div>
+                    </div>
+
+                    <div class="flex items-center text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-4 px-1 min-w-0 mt-auto">
+                        <div class="flex gap-4 min-w-0">
+                            <span class="truncate"><span class="text-slate-600">A/C:</span> <span class="text-slate-300 ml-1">${safeText(baseF.aircraft_type || 'N/A')}</span></span>
+                            <span class="truncate"><span class="text-slate-600">ROUTE:</span> <span class="text-slate-300 ml-1">${safeText(baseF.origin_icao)} &rarr; ${safeText(lastF.dest_icao)}</span></span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between border-t border-slate-800 pt-4 mt-auto">
+                        ${!isArchived ? `
+                        <button type="button" onclick="scheduleNextLeg('${lastF.id}', event)" class="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400 hover:text-emerald-400 transition-colors shrink-0">
+                            <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Add Leg
+                        </button>
+                        ` : `<span></span>`}
+                        <button type="button" onclick="flipCard('card-${groupId}')" class="text-[10px] font-semibold text-sky-400 hover:text-sky-300 flex items-center gap-1.5 transition-colors bg-sky-500/10 hover:bg-sky-500/20 px-3 py-1.5 rounded-md shrink-0">
+                            Manage Legs <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            const legsHtml = groupItems.map((item, index) => {
+                const f = item.f;
+                return `
+                <div class="border-b border-slate-800 py-3 last:border-0 flex flex-col gap-3 group">
+                    <div class="flex justify-between items-start">
+                        <div class="flex items-center gap-2">
+                            <span class="text-[9px] font-bold text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded-sm">L${index+1}</span>
+                            <span class="text-xs font-mono font-bold text-white">${safeText(f.origin_icao)} <i data-lucide="arrow-right" class="w-3 h-3 inline text-slate-600"></i> ${safeText(f.dest_icao)}</span>
+                        </div>
+                        <span class="text-[10px] text-sky-400 font-medium tracking-wide">${safeText(f.etd_zulu)}</span>
+                    </div>
+                    
+                    <div class="flex justify-between items-center pl-7">
+                        <div class="flex items-center gap-3">
+                            <label class="flex items-center gap-1.5 text-[10px] font-medium text-slate-300 cursor-pointer">
+                                <input type="checkbox" class="vvip-check w-3.5 h-3.5" ${f.permit_ready ? 'checked' : ''} onchange="updateChecklist('${f.id}', 'permit_ready', this)"> Verified
+                            </label>
+                            <select onchange="updateStatus('${f.id}', this.value);" onclick="event.stopPropagation();" class="status-dropdown bg-transparent border border-slate-700 rounded px-1.5 py-1 text-[9px] font-semibold text-slate-300 hover:text-white hover:border-slate-500 cursor-pointer focus:border-sky-500 outline-none transition-colors max-w-[85px]">
+                                <option value="Pending" ${f.status === 'Pending' ? 'selected' : ''}>Pending</option>
+                                <option value="Ready" ${f.status === 'Ready' ? 'selected' : ''}>Ready</option>
+                                <option value="Departed" ${f.status === 'Departed' ? 'selected' : ''}>Departed</option>
+                                <option value="Arrived" ${f.status === 'Arrived' ? 'selected' : ''}>Arrived</option>
+                            </select>
+                        </div>
+                        <div class="flex gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                            <button type="button" onclick="openEditModal('${f.id}'); event.stopPropagation();" class="text-slate-500 hover:text-sky-400"><i data-lucide="edit-2" class="w-3.5 h-3.5"></i></button>
+                            ${currentUserRole === 'admin' ? `<button type="button" onclick="deleteFlight('${f.id}'); event.stopPropagation();" class="text-slate-500 hover:text-red-400"><i data-lucide="trash" class="w-3.5 h-3.5"></i></button>` : ''}
+                        </div>
+                    </div>
+                </div>
+                `;
+            }).join('');
+
+            const backCard = `
+                <div class="p-4 sm:p-6 flex flex-col h-full bg-slate-900 rounded-[1rem] relative overflow-hidden">
+                    <div class="flex items-center justify-between mb-4 border-b border-slate-800 pb-4 gap-3 shrink-0">
+                        <h3 class="text-sm font-bold text-white tracking-wide shrink-0 flex items-center flex-wrap gap-2">
+                            <span><i data-lucide="layers" class="w-4 h-4 inline mr-1 text-sky-400"></i></span>
+                            ${isPendingBlock 
+                                ? `<span class="text-amber-400 text-xs">PENDING BLOCK</span>` 
+                                : `<span>${safeText(baseF.permit_number)}</span>`
+                            }
+                        </h3>
+                        
+                        <div class="flex gap-2 overflow-x-auto hide-scroll pb-1 items-center shrink-0">
+                            <button type="button" onclick="toggleGroupDetails('${groupId}', event)" class="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 px-2.5 py-1.5 rounded-md transition-colors shrink-0">
+                                <i data-lucide="file-text" class="w-3.5 h-3.5"></i> Details
+                            </button>
+                            <button type="button" onclick="downloadGroupFlightSummary('${safeText(baseF.tail_number)}', '${safeText(baseF.permit_number)}', event)" class="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-sky-400 bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/20 px-2.5 py-1.5 rounded-md transition-colors shrink-0">
+                                <i data-lucide="download" class="w-3.5 h-3.5"></i> PDF
+                            </button>
+                            <button type="button" onclick="closeFlipCard('card-${groupId}', event)" class="text-slate-500 hover:text-white p-1 transition-colors bg-slate-800 rounded-full shrink-0"><i data-lucide="x" class="w-4 h-4"></i></button>
+                        </div>
+                    </div>
+                    
+                    <div class="flex-1 bg-slate-950 rounded-xl border border-slate-800 p-3 overflow-y-auto custom-scrollbar flex flex-col h-0">
+                        ${legsHtml}
+                    </div>
+
+                    <div id="details-${groupId}" class="absolute inset-x-0 bottom-0 top-1/4 bg-slate-900/95 backdrop-blur-md z-20 flex flex-col p-6 transition-transform duration-300 translate-y-full border-t border-slate-700 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+                        <div class="flex justify-between items-center mb-4 border-b border-slate-800 pb-3 shrink-0">
+                            <h3 class="text-sm font-bold text-amber-400 tracking-wide flex items-center gap-2"><i data-lucide="file-text" class="w-4 h-4"></i> Block Permit Details</h3>
+                            <button type="button" onclick="toggleGroupDetails('${groupId}', event)" class="text-slate-400 hover:text-white p-1.5 transition-colors bg-slate-800 rounded-md hover:bg-slate-700"><i data-lucide="chevron-down" class="w-4 h-4"></i></button>
+                        </div>
+                        <div class="flex-1 overflow-y-auto custom-scrollbar text-left pr-2 flex flex-col gap-3">
+                            <div class="grid grid-cols-2 gap-2 text-xs">
+                                <div><span class="text-slate-500">Call Sign:</span> <span class="text-slate-300">${safeText(baseF.call_sign || 'TBA')}</span></div>
+                                <div><span class="text-slate-500">Captain:</span> <span class="text-slate-300">${safeText(baseF.captain || 'TBA')}</span></div>
+                                <div><span class="text-slate-500">Crew/Pax:</span> <span class="text-slate-300">${safeText(baseF.crew_count || '0')} / ${safeText(baseF.pax_count || '0')}</span></div>
+                                <div><span class="text-slate-500">Country:</span> <span class="text-slate-300">${safeText(baseF.country || 'N/A')}</span></div>
+                            </div>
+                            <div class="border-t border-slate-800 pt-3 mt-1">
+                                <span class="text-[10px] text-slate-500 uppercase tracking-widest font-semibold">Combined Remarks</span>
+                                <p class="text-xs text-slate-200 mt-1.5 whitespace-pre-wrap leading-relaxed">${groupItems.map((item, i) => item.f.remarks ? `L${i+1}: ${safeText(item.f.remarks)}` : '').filter(Boolean).join('\n\n') || 'No remarks.'}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            return `<div id="card-${groupId}" class="card-flip flight-card ${borderClass}">
+                <div class="card-flip-inner">
+                    <div class="card-front">${frontCard}</div>
+                    <div class="card-back">${backCard}</div>
+                </div>
+            </div>`;
         }
 
         function generateCard(f, isRisk, isPermitPending, isArchived, isMissed, isInProgress) {
