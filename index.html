@@ -12,14 +12,26 @@
     
     <title>VVIP Mission Control</title>
     <style>
+        /* Global body reset: Modern SaaS Slate Dark Mode */
         body { background: #020617; color: #f8fafc; font-family: 'Inter', system-ui, sans-serif; -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; }
+        
+        /* Glassmorphism utility */
         .glass { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.05); }
+        
+        /* Active filter state */
         .filter-btn { transition: all 0.2s ease; }
         .filter-btn.active { background: rgba(14, 165, 233, 0.15); border-color: #0ea5e9; color: #38bdf8; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        
+        /* Base flight card styling */
         .flight-card { min-height: 380px; display: flex; flex-direction: column; border-radius: 1rem; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
         .flight-card:hover { box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5); transform: translateY(-2px); }
-        .vvip-check { accent-color: #0ea5e9; width: 16px; height: 16px; cursor: pointer; border-radius: 3px; }
+        
+        /* Checkbox color customization */
+        .vvip-check { accent-color: #0ea5e9; width: 14px; height: 14px; cursor: pointer; border-radius: 3px; }
+        
+        /* Softened Critical Risk Alert */
         .risk-glow { animation: risk-pulse 2.5s infinite; border-color: rgba(239, 68, 68, 0.5) !important; }
+        /* Softened Permit Warning */
         .permit-glow { animation: permit-pulse 2.5s infinite; border-color: rgba(249, 115, 22, 0.5) !important; }
         
         @keyframes risk-pulse { 
@@ -33,22 +45,26 @@
             100% { box-shadow: inset 0 0 0px rgba(249, 115, 22, 0); } 
         }
         
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+        /* Custom scrollbar styling */
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #475569; }
         .hide-scroll::-webkit-scrollbar { display: none; }
         .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
 
+        /* Card flip animation styles */
         .card-flip { perspective: 1000px; }
         .card-flip-inner { position: relative; width: 100%; height: 100%; text-align: left; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; }
         .card-flipped .card-flip-inner { transform: rotateY(180deg); }
         .card-front, .card-back { position: absolute; width: 100%; height: 100%; display: flex; flex-direction: column; -webkit-backface-visibility: hidden; backface-visibility: hidden; border-radius: 1rem; overflow: hidden; }
         .card-back { transform: rotateY(180deg); background: #0f172a; border-color: rgba(14, 165, 233, 0.3); }
 
+        /* Data Manifest Row */
         .manifest-row { display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .manifest-row:last-child { border-bottom: none; }
 
+        /* Status Select Styling */
         select.status-dropdown option { background-color: #0f172a; color: #cbd5e1; font-weight: 500; }
 
         @media (max-width: 1024px) {
@@ -90,9 +106,15 @@
                 <i data-lucide="plane-takeoff" class="w-10 h-10 text-sky-500"></i>
             </div>
             <h1 class="text-2xl font-bold mb-6 text-white tracking-tight">VVIP Ops Center</h1>
-            <input type="email" id="email" placeholder="Email" class="w-full bg-slate-900/80 border border-slate-700 p-3.5 rounded-lg mb-4 text-white outline-none focus:border-sky-500 text-base">
-            <input type="password" id="password" placeholder="Password" class="w-full bg-slate-900/80 border border-slate-700 p-3.5 rounded-lg mb-6 text-white outline-none focus:border-sky-500 text-base">
-            <button onclick="handleLogin()" class="w-full bg-sky-600 hover:bg-sky-500 py-3.5 rounded-lg font-semibold text-white transition-all shadow-lg shadow-sky-900/20 text-sm">Sign In</button>
+            
+            <form onsubmit="event.preventDefault(); handleLogin();" class="w-full">
+                <input type="email" id="email" placeholder="Email" required autocomplete="email" class="w-full bg-slate-900/80 border border-slate-700 p-3.5 rounded-lg mb-4 text-white outline-none focus:border-sky-500 text-base">
+                <input type="password" id="password" placeholder="Password" required autocomplete="current-password" class="w-full bg-slate-900/80 border border-slate-700 p-3.5 rounded-lg mb-6 text-white outline-none focus:border-sky-500 text-base">
+                
+                <button type="submit" id="login-btn" class="w-full bg-sky-600 hover:bg-sky-500 py-3.5 rounded-lg font-semibold text-white transition-all shadow-lg shadow-sky-900/20 text-sm flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed">
+                    Sign In
+                </button>
+            </form>
         </div>
     </div>
 
@@ -305,6 +327,18 @@
         const MONTH_NAMES = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
         const STATUS_VALUES = ['Pending', 'Ready', 'Departed', 'Arrived'];
 
+        // --- SECURITY / XSS SANITIZATION ---
+        function safeText(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // --- ERROR HANDLING (TOAST NOTIFICATIONS) ---
         function showToast(message, type = 'success') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
@@ -313,7 +347,7 @@
             
             toast.innerHTML = `
                 <i data-lucide="${isError ? 'alert-circle' : 'check-circle'}" class="w-5 h-5 shrink-0 mt-0.5 sm:mt-0"></i>
-                <span class="text-xs font-semibold tracking-wide leading-snug">${message}</span>
+                <span class="text-xs font-semibold tracking-wide leading-snug">${safeText(message)}</span>
             `;
             container.appendChild(toast);
             lucide.createIcons();
@@ -399,15 +433,42 @@
             }
         }
 
+        // --- SECURED LOGIN LOGIC ---
         async function handleLogin() {
-            const email = document.getElementById('email').value, password = document.getElementById('password').value;
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+            const loginBtn = document.getElementById('login-btn');
+            
+            const email = emailInput.value.trim();
+            const password = passwordInput.value;
+
+            if (!email || !password) {
+                showToast('Please enter both email and password.', 'error');
+                return;
+            }
+
+            // Anti-spam loading state
+            loginBtn.disabled = true;
+            loginBtn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin inline mr-2"></i> Authenticating...';
+            lucide.createIcons();
+
             try {
                 const { error } = await _supabase.auth.signInWithPassword({ email, password });
                 if (error) throw error;
+                
+                emailInput.value = '';
+                passwordInput.value = '';
+                
                 checkSession();
                 showToast('Authentication Successful');
             } catch (err) {
-                showToast(err.message, 'error');
+                // Obfuscated error to prevent enumeration
+                showToast('Invalid login credentials or account locked.', 'error');
+                console.error(err);
+            } finally {
+                // Restore button
+                loginBtn.disabled = false;
+                loginBtn.innerText = 'Sign In';
             }
         }
 
@@ -417,7 +478,7 @@
                 currentUserRole = session.user.user_metadata.role || 'ops';
                 document.getElementById('login-screen').classList.add('hidden');
                 document.getElementById('main-dashboard').classList.remove('hidden');
-                document.getElementById('user-display').innerText = `${currentUserRole.toUpperCase()}: ${session.user.email.split('@')[0].toUpperCase()}`;
+                document.getElementById('user-display').innerText = `${safeText(currentUserRole.toUpperCase())}: ${safeText(session.user.email.split('@')[0].toUpperCase())}`;
                 if (currentUserRole === 'admin') { 
                     document.getElementById('admin-audit-btn').classList.remove('hidden'); 
                     document.getElementById('admin-analytics').classList.remove('hidden'); 
@@ -684,8 +745,7 @@
             editingFlightId = id; const f = allFlights.find(x => x.id === id);
             if (!f) return;
             document.getElementById('modal-title').innerText = "Mission Config";
-            
-            document.getElementById('mission-type-container').classList.remove('hidden');
+            document.getElementById('mission-type-container').classList.add('hidden');
             setMissionType(f.mission_type || 'landing');
             
             document.getElementById('new-tail').value = f.tail_number;
@@ -813,8 +873,8 @@
             const filtered = allLogs.filter(log => (log.action_details || '').toLowerCase().includes(search) || (log.user_email || '').toLowerCase().includes(search));
             container.innerHTML = filtered.map(log => `
                 <div class="bg-slate-800 border-l-[3px] border-sky-500 p-3 rounded-r-lg mb-2">
-                    <div class="flex justify-between items-center mb-1.5"><span class="font-bold text-slate-300 text-[10px] uppercase tracking-wider">${(log.user_email || '').split('@')[0]}</span><span class="text-[9px] text-slate-500 font-medium">${formatZuluDate(log.created_at)}</span></div>
-                    <p class="text-[11px] text-slate-400 leading-relaxed">${log.action_details || ''}</p>
+                    <div class="flex justify-between items-center mb-1.5"><span class="font-bold text-slate-300 text-[10px] uppercase tracking-wider">${safeText((log.user_email || '').split('@')[0])}</span><span class="text-[9px] text-slate-500 font-medium">${formatZuluDate(log.created_at)}</span></div>
+                    <p class="text-[11px] text-slate-400 leading-relaxed">${safeText(log.action_details || '')}</p>
                 </div>
             `).join('');
         }
@@ -906,7 +966,7 @@
 
             const statusText = isArchived ? 'ARCHIVED' : (isInProgress ? 'IN PROGRESS' : (isRisk ? 'ACTION REQ' : (isPermitPending ? 'PERMIT PEND' : f.status.toUpperCase())));
 
-            const overflyBadge = f.mission_type === 'overflying' ? `<span class="ml-2 px-1.5 py-0.5 rounded-sm bg-slate-800 border border-slate-700 text-[9px] font-semibold text-slate-400 uppercase tracking-wider shrink-0 align-middle">${f.country || 'N/A'}</span>` : '';
+            const overflyBadge = f.mission_type === 'overflying' ? `<span class="ml-2 px-1.5 py-0.5 rounded-sm bg-slate-800 border border-slate-700 text-[9px] font-semibold text-slate-400 uppercase tracking-wider shrink-0 align-middle">${safeText(f.country || 'N/A')}</span>` : '';
 
             let checklistHTML = '';
             if (!isArchived) {
@@ -940,16 +1000,16 @@
             }
             const servicesSection = servicesArr.length > 0 ? `<div class="flex items-center gap-1.5 ml-auto border-l border-slate-700 pl-3 shrink-0">${servicesArr.join('')}</div>` : '';
 
-            // FRONT CARD
+            // FRONT CARD (Secured Output)
             const frontCard = `
                 <div class="p-4 sm:p-6 flex-1 flex flex-col h-full bg-slate-900 rounded-[1rem]">
                     <div class="flex justify-between items-start mb-4 gap-3">
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center mb-1.5">
-                                <h2 class="text-xl font-bold text-white tracking-tight leading-none truncate">${f.tail_number}</h2>
+                                <h2 class="text-xl font-bold text-white tracking-tight leading-none truncate">${safeText(f.tail_number)}</h2>
                                 ${overflyBadge}
                             </div>
-                            <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-widest truncate">${f.operator_name || 'PRIVATE'}</p>
+                            <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-widest truncate">${safeText(f.operator_name || 'PRIVATE')}</p>
                         </div>
                         <div class="flex flex-col items-end gap-2 shrink-0">
                             <span class="px-2.5 py-1 rounded-md text-[9px] font-bold tracking-wider ${pillClass} whitespace-nowrap">${statusText}</span>
@@ -961,22 +1021,22 @@
                     </div>
 
                     <div class="bg-slate-950 rounded-xl border border-slate-800 p-4 mb-4 flex items-center justify-between">
-                        <div class="text-2xl font-mono font-bold text-white">${f.origin_icao}</div>
+                        <div class="text-2xl font-mono font-bold text-white">${safeText(f.origin_icao)}</div>
                         <div class="flex-1 px-4 flex flex-col items-center">
                             <span class="text-[10px] font-medium text-slate-400 tracking-widest mb-1.5 flex items-center gap-1 whitespace-nowrap">
-                                <i data-lucide="clock" class="w-3 h-3 text-slate-500"></i> ${f.etd_zulu}
+                                <i data-lucide="clock" class="w-3 h-3 text-slate-500"></i> ${safeText(f.etd_zulu)}
                             </span>
                             <div class="w-full h-px bg-slate-700 relative">
                                 <i data-lucide="plane" class="w-3.5 h-3.5 text-slate-500 absolute -top-[7px] left-1/2 -translate-x-1/2 rotate-90"></i>
                             </div>
                         </div>
-                        <div class="text-2xl font-mono font-bold text-white">${f.dest_icao}</div>
+                        <div class="text-2xl font-mono font-bold text-white">${safeText(f.dest_icao)}</div>
                     </div>
 
                     <div class="flex items-center text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-4 px-1 min-w-0">
                         <div class="flex gap-4 min-w-0">
-                            <span class="truncate"><span class="text-slate-600">A/C:</span> <span class="text-slate-300 ml-1">${f.aircraft_type || 'N/A'}</span></span>
-                            <span class="truncate"><span class="text-slate-600">MTOW:</span> <span class="text-slate-300 ml-1">${f.mtow ? f.mtow + ' KG' : 'N/A'}</span></span>
+                            <span class="truncate"><span class="text-slate-600">A/C:</span> <span class="text-slate-300 ml-1">${safeText(f.aircraft_type || 'N/A')}</span></span>
+                            <span class="truncate"><span class="text-slate-600">MTOW:</span> <span class="text-slate-300 ml-1">${f.mtow ? safeText(f.mtow) + ' KG' : 'N/A'}</span></span>
                         </div>
                         ${servicesSection}
                     </div>
@@ -1000,7 +1060,7 @@
                 </div>
             `;
 
-            // BACK CARD
+            // BACK CARD (Secured Output)
             const backCard = `
                 <div class="p-4 sm:p-6 flex flex-col h-full bg-slate-900 rounded-[1rem] relative overflow-hidden">
                     <div class="flex items-center justify-between mb-4 border-b border-slate-800 pb-4 gap-3">
@@ -1020,16 +1080,16 @@
                     </div>
                     
                     <div class="text-center mb-5 min-w-0 px-2">
-                        <h2 class="text-xl font-mono font-bold text-white leading-none mb-1.5 truncate">${f.tail_number}</h2>
-                        <p class="text-[10px] text-slate-400 font-semibold tracking-widest uppercase truncate">${f.origin_icao} <i data-lucide="arrow-right" class="w-2.5 h-2.5 inline mx-1"></i> ${f.dest_icao}</p>
+                        <h2 class="text-xl font-mono font-bold text-white leading-none mb-1.5 truncate">${safeText(f.tail_number)}</h2>
+                        <p class="text-[10px] text-slate-400 font-semibold tracking-widest uppercase truncate">${safeText(f.origin_icao)} <i data-lucide="arrow-right" class="w-2.5 h-2.5 inline mx-1"></i> ${safeText(f.dest_icao)}</p>
                     </div>
 
                     <div class="flex-1 bg-slate-950 rounded-xl border border-slate-800 p-4 flex flex-col justify-center">
-                        <div class="manifest-row"><span class="manifest-label shrink-0 mr-2">Call Sign</span><span class="manifest-value truncate">${f.call_sign || 'TBA'}</span></div>
-                        <div class="manifest-row"><span class="manifest-label shrink-0 mr-2">Captain</span><span class="manifest-value text-slate-300 truncate">${f.captain || 'TBA'}</span></div>
-                        <div class="manifest-row"><span class="manifest-label shrink-0 mr-2">Crew / Pax</span><span class="manifest-value shrink-0">${f.crew_count || '0'} <span class="text-slate-600 font-normal px-1">/</span> ${f.pax_count || '0'}</span></div>
-                        <div class="manifest-row"><span class="manifest-label shrink-0 mr-2">Permit No</span><span class="manifest-value truncate ${f.permit_number ? 'text-sky-400' : 'text-orange-400'}">${f.permit_number || 'AWAITED'}</span></div>
-                        <div class="manifest-row"><span class="manifest-label shrink-0 mr-2">Handling</span><span class="manifest-value truncate">${f.mission_type === 'overflying' ? 'N/A' : (f.ground_handling || 'TBA')}</span></div>
+                        <div class="manifest-row"><span class="manifest-label shrink-0 mr-2">Call Sign</span><span class="manifest-value truncate">${safeText(f.call_sign || 'TBA')}</span></div>
+                        <div class="manifest-row"><span class="manifest-label shrink-0 mr-2">Captain</span><span class="manifest-value text-slate-300 truncate">${safeText(f.captain || 'TBA')}</span></div>
+                        <div class="manifest-row"><span class="manifest-label shrink-0 mr-2">Crew / Pax</span><span class="manifest-value shrink-0">${safeText(f.crew_count || '0')} <span class="text-slate-600 font-normal px-1">/</span> ${safeText(f.pax_count || '0')}</span></div>
+                        <div class="manifest-row"><span class="manifest-label shrink-0 mr-2">Permit No</span><span class="manifest-value truncate ${f.permit_number ? 'text-sky-400' : 'text-orange-400'}">${safeText(f.permit_number || 'AWAITED')}</span></div>
+                        <div class="manifest-row"><span class="manifest-label shrink-0 mr-2">Handling</span><span class="manifest-value truncate">${f.mission_type === 'overflying' ? 'N/A' : safeText(f.ground_handling || 'TBA')}</span></div>
                     </div>
 
                     <div id="remarks-${f.id}" class="absolute inset-x-0 bottom-0 top-1/4 bg-slate-900/95 backdrop-blur-md z-20 flex flex-col p-6 transition-transform duration-300 translate-y-full border-t border-slate-700 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
@@ -1038,7 +1098,7 @@
                             <button type="button" onclick="toggleRemarks('${f.id}', event)" class="text-slate-400 hover:text-white p-1.5 transition-colors bg-slate-800 rounded-md hover:bg-slate-700"><i data-lucide="chevron-down" class="w-4 h-4"></i></button>
                         </div>
                         <div class="flex-1 overflow-y-auto custom-scrollbar text-left pr-2">
-                            ${f.remarks ? `<p class="text-xs text-slate-200 leading-relaxed font-sans whitespace-pre-wrap">${f.remarks}</p>` : `<p class="text-xs text-slate-500 italic">No notes attached to this mission.</p>`}
+                            ${f.remarks ? `<p class="text-xs text-slate-200 leading-relaxed font-sans whitespace-pre-wrap">${safeText(f.remarks)}</p>` : `<p class="text-xs text-slate-500 italic">No notes attached to this mission.</p>`}
                         </div>
                     </div>
                 </div>
