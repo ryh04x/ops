@@ -102,6 +102,19 @@
         </div>
     </div>
 
+    <div id="selection-bar" class="fixed bottom-0 inset-x-0 bg-slate-900/95 backdrop-blur-md border-t border-slate-700 p-4 sm:p-5 flex justify-between items-center z-[150] translate-y-full transition-transform shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+        <div class="flex items-center justify-between max-w-6xl mx-auto w-full gap-4 flex-wrap">
+            <div class="flex-1 min-w-[200px]">
+                <h3 class="text-sm sm:text-base font-bold text-white"><span id="selected-count" class="text-sky-400">0</span> Flights Selected</h3>
+                <p class="text-[10px] sm:text-xs text-slate-400">Select OVF flights with the same operator to merge them into a single Block Permit.</p>
+            </div>
+            <div class="flex gap-2 sm:gap-3 shrink-0 w-full sm:w-auto mt-2 sm:mt-0">
+                <button onclick="toggleSelectMode()" class="flex-1 sm:flex-none px-4 py-3 sm:py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-semibold transition-colors border border-slate-700">Cancel</button>
+                <button onclick="stackSelectedFlights()" class="flex-1 sm:flex-none px-4 py-3 sm:py-2.5 bg-sky-500 hover:bg-sky-400 text-white rounded-lg text-xs font-bold transition-colors shadow-lg shadow-sky-500/20 flex items-center justify-center gap-1.5"><i data-lucide="layers" class="w-4 h-4"></i> Stack Selected</button>
+            </div>
+        </div>
+    </div>
+
     <div id="update-password-screen" class="fixed inset-0 z-[120] bg-slate-950 hidden flex items-center justify-center p-4 sm:p-6 text-center">
         <div class="glass w-full max-w-sm p-6 sm:p-8 rounded-2xl shadow-2xl border border-sky-500/30">
             <div class="flex justify-center mb-6">
@@ -198,7 +211,7 @@
                 </div>
             </div>
 
-            <div class="flex flex-col gap-4 mb-6 pb-4 border-b border-slate-800/50">
+            <div class="flex flex-col md:flex-row gap-4 mb-6 pb-4 border-b border-slate-800/50 justify-between">
                 <div class="flex overflow-x-auto hide-scroll snap-x gap-2 w-full pb-1">
                     <button onclick="setFilter('all')" id="btn-all" class="filter-btn active px-4 py-2 rounded-lg text-xs font-semibold border border-transparent text-slate-300 hover:bg-slate-800 whitespace-nowrap snap-start shrink-0">All</button>
                     <button onclick="setFilter('today')" id="btn-today" class="filter-btn px-4 py-2 rounded-lg text-xs font-medium border border-transparent text-slate-400 hover:bg-slate-800 hover:text-slate-200 whitespace-nowrap snap-start shrink-0">Today</button>
@@ -210,10 +223,16 @@
                     <button onclick="setFilter('risk')" id="btn-risk" class="filter-btn px-4 py-2 rounded-lg text-xs font-medium border border-transparent text-red-400/80 hover:bg-red-500/10 whitespace-nowrap snap-start shrink-0">Risks</button>
                     <button onclick="setFilter('permit')" id="btn-permit" class="filter-btn px-4 py-2 rounded-lg text-xs font-medium border border-transparent text-orange-400/80 hover:bg-orange-500/10 whitespace-nowrap snap-start shrink-0">Permits</button>
                 </div>
-                <div class="relative w-full md:w-72 md:ml-auto">
-                    <i data-lucide="search" class="w-4 h-4 absolute left-3 top-[11px] text-slate-500"></i>
-                    <input type="text" id="search-input" oninput="applyFilter(); toggleFlightClearBtn();" placeholder="Search flights..." class="w-full bg-slate-900 border border-slate-700 rounded-lg pl-9 pr-10 py-2.5 sm:py-2 text-sm text-white outline-none focus:border-sky-500 transition-colors">
-                    <button id="clear-flight-btn" onclick="clearFlightSearch()" class="absolute right-3 top-[11px] text-slate-500 hover:text-white hidden"><i data-lucide="x" class="w-4 h-4"></i></button>
+                
+                <div class="flex w-full md:w-auto gap-2 items-center shrink-0">
+                    <div class="relative w-full md:w-72">
+                        <i data-lucide="search" class="w-4 h-4 absolute left-3 top-[11px] text-slate-500"></i>
+                        <input type="text" id="search-input" oninput="applyFilter(); toggleFlightClearBtn();" placeholder="Search flights..." class="w-full bg-slate-900 border border-slate-700 rounded-lg pl-9 pr-10 py-2.5 sm:py-2 text-sm text-white outline-none focus:border-sky-500 transition-colors">
+                        <button id="clear-flight-btn" onclick="clearFlightSearch()" class="absolute right-3 top-[11px] text-slate-500 hover:text-white hidden"><i data-lucide="x" class="w-4 h-4"></i></button>
+                    </div>
+                    <button id="select-mode-btn" onclick="toggleSelectMode()" class="bg-slate-900 border border-slate-700 text-slate-400 hover:text-white hover:bg-slate-800 px-3 py-2.5 sm:py-2 rounded-lg flex items-center justify-center gap-1.5 text-xs font-semibold transition-colors shrink-0" title="Select & Stack Flights">
+                        <i data-lucide="layers" class="w-4 h-4"></i> <span class="hidden sm:inline">Stack</span>
+                    </button>
                 </div>
             </div>
 
@@ -235,12 +254,14 @@
         </main>
     </div>
 
+    <!-- SCHEDULE MODAL -->
     <div id="modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden z-[110] flex items-center justify-center p-3 sm:p-4">
         <div class="bg-slate-900 w-full max-w-lg p-5 sm:p-8 rounded-2xl border border-slate-700 shadow-2xl max-h-[95vh] overflow-y-auto custom-scrollbar relative">
             <button onclick="closeModal()" class="absolute top-4 right-4 sm:top-5 sm:right-5 text-slate-500 hover:text-white transition-colors z-10 bg-slate-800 sm:bg-transparent rounded-full p-1"><i data-lucide="x" class="w-5 h-5"></i></button>
             <h2 id="modal-title" class="text-lg sm:text-xl font-bold text-white mb-5 sm:mb-6">Schedule Mission</h2>
             
             <form id="flight-form" onsubmit="event.preventDefault(); addOrUpdateFlight();" class="space-y-3 sm:space-y-4">
+                
                 <div id="mission-type-container" class="flex p-1 bg-slate-950 rounded-lg border border-slate-800">
                     <button type="button" onclick="setMissionType('landing')" id="type-landing" class="flex-1 py-2 rounded-md text-xs font-semibold transition-all bg-slate-800 text-white shadow-sm">Landing</button>
                     <button type="button" onclick="setMissionType('overflying')" id="type-overflying" class="flex-1 py-2 rounded-md text-xs font-medium transition-all text-slate-400 hover:text-slate-200 hover:bg-slate-800/50">Overflying</button>
@@ -263,76 +284,9 @@
                         <input id="new-aircraft-type" type="text" placeholder="GLF6" required class="w-full bg-slate-950 border border-slate-700 p-2.5 rounded-lg text-sm text-white uppercase focus:border-sky-500 outline-none">
                     </div>
                     <div>
-                        <label id="mtow-label" class="block text-[10px] font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">MTOW (kg)</label>
-                        <input id="new-mtow" type="number" placeholder="45000" required class="w-full bg-slate-950 border border-slate-700 p-2.5 rounded-lg text-sm text-white focus:border-sky-500 outline-none transition-opacity">
+                        <label class="block text-[10px] font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Call Sign</label>
+                        <input id="new-callsign" type="text" placeholder="VVIP01" required class="w-full bg-slate-950 border border-slate-700 p-2.5 rounded-lg text-sm text-white uppercase focus:border-sky-500 outline-none">
                     </div>
-                </div>
-
-                <div class="bg-slate-950/50 p-3 sm:p-4 rounded-xl border border-slate-800">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4">
-                        <div>
-                            <label class="block text-[10px] font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Call Sign (Opt)</label>
-                            <input id="new-callsign" type="text" placeholder="VVIP01" class="w-full bg-slate-900 border border-slate-700 p-2.5 sm:p-2 rounded-md text-sm sm:text-xs text-white uppercase focus:border-sky-500 outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Captain (Opt)</label>
-                            <input id="new-captain" type="text" placeholder="Name" class="w-full bg-slate-900 border border-slate-700 p-2.5 sm:p-2 rounded-md text-sm sm:text-xs text-white uppercase focus:border-sky-500 outline-none">
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4">
-                        <div>
-                            <label class="block text-[10px] font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Crew</label>
-                            <input id="new-crew-count" type="number" placeholder="0" class="w-full bg-slate-900 border border-slate-700 p-2.5 sm:p-2 rounded-md text-sm sm:text-xs text-white focus:border-sky-500 outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Pax</label>
-                            <input id="new-pax-count" type="number" placeholder="0" class="w-full bg-slate-900 border border-slate-700 p-2.5 sm:p-2 rounded-md text-sm sm:text-xs text-white focus:border-sky-500 outline-none">
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-[10px] font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Permit No</label>
-                        <input id="new-permit-no" type="text" placeholder="TBA" class="w-full bg-slate-900 border border-slate-700 p-2.5 sm:p-2 rounded-md text-sm sm:text-xs text-white uppercase focus:border-sky-500 outline-none transition-opacity">
-                        
-                        <div id="pending-block-container" class="mt-2.5 hidden">
-                            <label class="flex items-center gap-1.5 text-[10px] font-semibold text-slate-400 cursor-pointer w-max">
-                                <input type="checkbox" id="is-pending-block" class="vvip-check w-3.5 h-3.5" onchange="togglePendingBlock(this.checked)"> Permit awaited (Group as Pending Block)
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="mt-3 sm:mt-4">
-                        <label class="block text-[10px] font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Handling Agent</label>
-                        <input id="new-ground-handling" type="text" placeholder="Agent Name" class="w-full bg-slate-900 border border-slate-700 p-2.5 sm:p-2 rounded-md text-sm sm:text-xs text-white uppercase focus:border-sky-500 outline-none transition-opacity">
-                    </div>
-                </div>
-
-                <div id="country-field" class="hidden">
-                    <label class="block text-[10px] font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Overflight Country</label>
-                    <input id="new-country" type="text" placeholder="France" class="w-full bg-slate-950 border border-slate-700 p-2.5 rounded-lg text-sm text-white uppercase focus:border-sky-500 outline-none">
-                </div>
-                
-                <div id="services-fields" class="hidden bg-slate-950/50 p-3 sm:p-4 rounded-xl border border-slate-800">
-                    <p class="text-[10px] font-semibold text-slate-400 mb-3 uppercase tracking-wider">Requested Services</p>
-                    <div class="flex flex-wrap gap-4">
-                        <label class="flex items-center gap-2 text-sm sm:text-xs font-medium text-slate-300 cursor-pointer">
-                            <input type="checkbox" id="new-catering" class="vvip-check w-4 h-4 sm:w-[14px] sm:h-[14px]"> Catering
-                        </label>
-                        <label class="flex items-center gap-2 text-sm sm:text-xs font-medium text-slate-300 cursor-pointer">
-                            <input type="checkbox" id="new-transport" class="vvip-check w-4 h-4 sm:w-[14px] sm:h-[14px]"> Transport
-                        </label>
-                        <label class="flex items-center gap-2 text-sm sm:text-xs font-medium text-slate-300 cursor-pointer">
-                            <input type="checkbox" id="new-fuel" class="vvip-check w-4 h-4 sm:w-[14px] sm:h-[14px]"> Fuel
-                        </label>
-                    </div>
-                </div>
-
-                <div>
-                    <div class="flex justify-between items-end mb-1.5">
-                        <label class="block text-[10px] font-bold text-sky-400 uppercase tracking-wider">Schedule (ZULU / UTC Time)</label>
-                        <span id="utc-preview" class="text-[9px] font-bold text-sky-400 uppercase tracking-widest hidden"></span>
-                    </div>
-                    <input id="new-etd" type="datetime-local" oninput="updateUtcPreview(this.value)" required class="w-full bg-slate-950 border border-slate-700 p-2.5 rounded-lg text-sm text-white [color-scheme:dark] focus:border-sky-500 outline-none">
                 </div>
 
                 <div class="grid grid-cols-2 gap-3 sm:gap-4">
@@ -345,14 +299,91 @@
                         <input id="new-dest" type="text" placeholder="EGGW" maxlength="4" required class="w-full bg-slate-950 border border-slate-700 p-2.5 rounded-lg text-sm text-white uppercase font-mono focus:border-sky-500 outline-none">
                     </div>
                 </div>
-                
+
                 <div>
-                    <label class="block text-[10px] font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Remarks</label>
-                    <textarea id="new-remarks" placeholder="Optional dispatch notes..." rows="2" class="w-full bg-slate-950 border border-slate-700 p-2.5 rounded-lg text-sm text-white resize-none focus:border-sky-500 outline-none"></textarea>
+                    <div class="flex justify-between items-end mb-1.5">
+                        <label class="block text-[10px] font-bold text-sky-400 uppercase tracking-wider">Schedule (ZULU / UTC Time)</label>
+                        <span id="utc-preview" class="text-[9px] font-bold text-sky-400 uppercase tracking-widest hidden"></span>
+                    </div>
+                    <input id="new-etd" type="datetime-local" oninput="updateUtcPreview(this.value)" required class="w-full bg-slate-950 border border-slate-700 p-2.5 rounded-lg text-sm text-white [color-scheme:dark] focus:border-sky-500 outline-none">
                 </div>
 
-                <div class="pt-2 sm:pt-3 border-t border-slate-800">
-                    <button id="modal-submit" type="submit" class="w-full bg-sky-500 hover:bg-sky-400 text-white py-3.5 rounded-lg font-semibold text-sm transition-colors shadow-md">Save Mission</button>
+                <div id="ovf-extra-inject" class="w-full mt-3 sm:mt-4">
+                    <div id="dynamic-ovf-container" class="grid grid-cols-3 gap-3 sm:gap-4">
+                        <div id="country-field" class="hidden">
+                            <label class="block text-[10px] font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Country</label>
+                            <input id="new-country" type="text" value="INDIA" class="w-full bg-slate-950 border border-slate-700 p-2.5 rounded-lg text-sm text-white uppercase focus:border-sky-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Crew (Opt)</label>
+                            <input id="new-crew-count" type="number" placeholder="0" class="w-full bg-slate-950 border border-slate-700 p-2.5 rounded-lg text-sm text-white focus:border-sky-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Pax (Opt)</label>
+                            <input id="new-pax-count" type="number" placeholder="0" class="w-full bg-slate-950 border border-slate-700 p-2.5 rounded-lg text-sm text-white focus:border-sky-500 outline-none">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-950/50 p-3 sm:p-4 rounded-xl border border-slate-800 mt-3 sm:mt-4">
+                    <label class="block text-[10px] font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Permit No</label>
+                    <input id="new-permit-no" type="text" placeholder="TBA" class="w-full bg-slate-900 border border-slate-700 p-2.5 sm:p-2 rounded-md text-sm sm:text-xs text-white uppercase focus:border-sky-500 outline-none transition-opacity">
+                    
+                    <div id="pending-block-container" class="mt-2.5 hidden">
+                        <label class="flex items-center gap-1.5 text-[10px] font-semibold text-slate-400 cursor-pointer w-max">
+                            <input type="checkbox" id="is-pending-block" class="vvip-check w-3.5 h-3.5" onchange="togglePendingBlock(this.checked)"> Permit awaited (Group as Pending Block)
+                        </label>
+                    </div>
+                </div>
+
+                <button type="button" onclick="toggleAdvancedFields()" class="w-full py-2.5 text-[10px] font-bold text-slate-400 hover:text-white uppercase tracking-wider flex items-center justify-center gap-1 border border-slate-800 rounded-lg mt-2 bg-slate-900/50 hover:bg-slate-800 transition-colors">
+                    <i data-lucide="chevron-down" id="advanced-icon" class="w-4 h-4 transition-transform"></i> Show Advanced Details
+                </button>
+
+                <div id="advanced-fields" class="hidden space-y-3 sm:space-y-4 mt-3 pt-4 border-t border-slate-800">
+                    
+                    <div id="landing-extra-inject" class="w-full"></div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4">
+                        <div>
+                            <label class="block text-[10px] font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Captain (Opt)</label>
+                            <input id="new-captain" type="text" placeholder="Name" class="w-full bg-slate-950 border border-slate-700 p-2.5 rounded-lg text-sm text-white uppercase focus:border-sky-500 outline-none">
+                        </div>
+                        <div>
+                            <label id="mtow-label" class="block text-[10px] font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">MTOW (kg)</label>
+                            <input id="new-mtow" type="number" placeholder="45000" class="w-full bg-slate-950 border border-slate-700 p-2.5 rounded-lg text-sm text-white focus:border-sky-500 outline-none transition-opacity">
+                        </div>
+                    </div>
+
+                    <div class="mt-3 sm:mt-4" id="handling-field">
+                        <label class="block text-[10px] font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Handling Agent (Opt)</label>
+                        <input id="new-ground-handling" type="text" placeholder="Agent Name" class="w-full bg-slate-950 border border-slate-700 p-2.5 rounded-lg text-sm text-white uppercase focus:border-sky-500 outline-none transition-opacity">
+                    </div>
+                    
+                    <div id="services-fields" class="hidden bg-slate-950/50 p-3 sm:p-4 rounded-xl border border-slate-800">
+                        <p class="text-[10px] font-semibold text-slate-400 mb-3 uppercase tracking-wider">Requested Services</p>
+                        <div class="flex flex-wrap gap-4">
+                            <label class="flex items-center gap-2 text-sm sm:text-xs font-medium text-slate-300 cursor-pointer">
+                                <input type="checkbox" id="new-catering" class="vvip-check w-4 h-4 sm:w-[14px] sm:h-[14px]"> Catering
+                            </label>
+                            <label class="flex items-center gap-2 text-sm sm:text-xs font-medium text-slate-300 cursor-pointer">
+                                <input type="checkbox" id="new-transport" class="vvip-check w-4 h-4 sm:w-[14px] sm:h-[14px]"> Transport
+                            </label>
+                            <label class="flex items-center gap-2 text-sm sm:text-xs font-medium text-slate-300 cursor-pointer">
+                                <input type="checkbox" id="new-fuel" class="vvip-check w-4 h-4 sm:w-[14px] sm:h-[14px]"> Fuel
+                            </label>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Remarks (Opt)</label>
+                        <textarea id="new-remarks" placeholder="Optional dispatch notes..." rows="2" class="w-full bg-slate-950 border border-slate-700 p-2.5 rounded-lg text-sm text-white resize-none focus:border-sky-500 outline-none"></textarea>
+                    </div>
+
+                </div>
+
+                <div class="pt-4 sm:pt-5">
+                    <button id="modal-submit" type="submit" class="w-full bg-sky-500 hover:bg-sky-400 text-white py-3.5 rounded-lg font-bold text-sm transition-colors shadow-lg shadow-sky-500/20">Save Mission</button>
                 </div>
             </form>
         </div>
@@ -366,8 +397,14 @@
 
         let currentUserRole = 'ops', allFlights = [], allLogs = [], activeFilter = 'all', editingFlightId = null, archiveLimit = 9, selectedMissionType = 'landing';
         let fleetChannel = null, logsChannel = null;
-        let pendingStatusUpdate = null; // Holds data for the confirm modal
+        let pendingStatusUpdate = null; 
         const flipCardTimers = {};
+        
+        // --- SELECTION MODE STATE ---
+        window.isSelectMode = false;
+        window.selectedCards = new Set();
+        window.renderedGroups = {};
+
         const MONTH_MAP = { JAN: 0, FEB: 1, MAR: 2, APR: 3, MAY: 4, JUN: 5, JUL: 6, AUG: 7, SEP: 8, OCT: 9, NOV: 10, DEC: 11 };
         const MONTH_NAMES = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
         const STATUS_VALUES = ['Pending', 'Ready', 'Departed', 'Arrived'];
@@ -394,7 +431,129 @@
             setTimeout(() => { toast.classList.add('translate-x-full', 'opacity-0'); setTimeout(() => toast.remove(), 300); }, 4000);
         }
 
-        // --- UI SEARCH CLEARS ---
+        // --- UX ENHANCEMENTS ---
+        function toggleAdvancedFields() {
+            const container = document.getElementById('advanced-fields');
+            const icon = document.getElementById('advanced-icon');
+            if(container.classList.contains('hidden')) {
+                container.classList.remove('hidden');
+                icon.style.transform = 'rotate(180deg)';
+            } else {
+                container.classList.add('hidden');
+                icon.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        function resetAdvancedFields() {
+            const container = document.getElementById('advanced-fields');
+            const icon = document.getElementById('advanced-icon');
+            container.classList.add('hidden');
+            icon.style.transform = 'rotate(0deg)';
+        }
+
+        // --- SELECTION STACKING LOGIC ---
+        function toggleSelectMode() {
+            window.isSelectMode = !window.isSelectMode;
+            window.selectedCards.clear();
+            
+            const btn = document.getElementById('select-mode-btn');
+            const bar = document.getElementById('selection-bar');
+            
+            if (window.isSelectMode) {
+                btn.classList.add('bg-sky-500/20', 'text-sky-400', 'border-sky-500/50');
+                bar.classList.remove('translate-y-full');
+                showToast("Select Mode: Click OVF cards to stack them.");
+                
+                // Unflip any open cards
+                for(let t in flipCardTimers) { closeFlipCard(t); }
+            } else {
+                btn.classList.remove('bg-sky-500/20', 'text-sky-400', 'border-sky-500/50');
+                bar.classList.add('translate-y-full');
+            }
+            
+            document.getElementById('selected-count').innerText = '0';
+            applyFilter(); 
+        }
+
+        function handleCardSelect(cardId, event) {
+            if(event) event.stopPropagation();
+            if(window.selectedCards.has(cardId)) {
+                window.selectedCards.delete(cardId);
+            } else {
+                window.selectedCards.add(cardId);
+            }
+            document.getElementById('selected-count').innerText = window.selectedCards.size;
+            applyFilter(); // Triggers instant re-render to show selection overlay
+        }
+
+        async function stackSelectedFlights() {
+            if(window.selectedCards.size < 2) {
+                showToast("Please select at least 2 flights/blocks to stack.", "error");
+                return;
+            }
+
+            let flightsToStack = [];
+            for(let cardId of window.selectedCards) {
+                if (cardId.startsWith('group-')) {
+                    const groupFlights = window.renderedGroups[cardId];
+                    if(groupFlights) flightsToStack.push(...groupFlights);
+                } else {
+                    const f = allFlights.find(x => x.id === cardId);
+                    if(f) flightsToStack.push(f);
+                }
+            }
+
+            const allOvf = flightsToStack.every(f => f.mission_type === 'overflying');
+            if (!allOvf) {
+                showToast("Selection Error: Only Overflying missions can be stacked.", "error");
+                return;
+            }
+
+            const operators = [...new Set(flightsToStack.map(f => (f.operator_name || '').trim().toLowerCase()))];
+            if (operators.length > 1) {
+                showToast("Operator Mismatch: All selected flights must have the exact same Operator Name.", "error");
+                return;
+            }
+
+            const realPermits = [...new Set(flightsToStack.map(f => f.permit_number).filter(p => p && !p.startsWith('PENDING-BLOCK-')))];
+            if (realPermits.length > 1) {
+                showToast("Conflict Error: Selected flights have different Approved Permit Numbers.", "error");
+                return;
+            }
+
+            let targetPermit = null;
+            if (realPermits.length === 1) {
+                targetPermit = realPermits[0];
+            } else {
+                const pendingPermits = [...new Set(flightsToStack.map(f => f.permit_number).filter(p => p && p.startsWith('PENDING-BLOCK-')))];
+                if (pendingPermits.length > 0) targetPermit = pendingPermits[0];
+                else targetPermit = `PENDING-BLOCK-${Date.now().toString(36).toUpperCase()}-${Math.floor(Math.random()*1000)}`;
+            }
+
+            const targetPermitReady = realPermits.length === 1 ? true : false;
+            const newStatus = targetPermitReady ? 'Ready' : 'Pending';
+
+            let updateCount = 0;
+            showToast("Stacking flights... please wait.");
+            
+            for (let f of flightsToStack) {
+                if (f.permit_number !== targetPermit) {
+                    await safeUpdateFlight(f.id, { permit_number: targetPermit, permit_ready: targetPermitReady, status: newStatus });
+                    updateCount++;
+                }
+            }
+
+            if(updateCount > 0) {
+                createLog(`Stacked ${flightsToStack.length} flights for operator ${flightsToStack[0].operator_name || 'NIL'} under permit ${targetPermit}`);
+                showToast(`Successfully merged ${flightsToStack.length} flights into Block.`);
+            } else {
+                showToast("Flights were already stacked.");
+            }
+
+            toggleSelectMode();
+        }
+
+        // --- SEARCH CLEARS ---
         function toggleAuditClearBtn() {
             const input = document.getElementById('notif-search');
             const btn = document.getElementById('clear-audit-btn');
@@ -644,6 +803,7 @@
 
         function flipCard(cardId, event) {
             if (event) event.stopPropagation();
+            if (window.isSelectMode) return; // Disabled in select mode
             const card = document.getElementById(cardId);
             if (!card) return;
             card.classList.add('card-flipped');
@@ -701,6 +861,7 @@
 
             editingFlightId = null; 
             document.getElementById('flight-form').reset(); 
+            resetAdvancedFields();
             
             document.getElementById('mission-type-container').classList.remove('hidden');
             setMissionType(previousFlight.mission_type || 'landing');
@@ -858,40 +1019,58 @@
 
         function setMissionType(type) {
             selectedMissionType = type;
-            const landBtn = document.getElementById('type-landing'), overBtn = document.getElementById('type-overflying'), countryField = document.getElementById('country-field'), countryInput = document.getElementById('new-country'), servicesFields = document.getElementById('services-fields');
-            const groundHandlingInput = document.getElementById('new-ground-handling');
-            const mtowInput = document.getElementById('new-mtow');
-            const mtowLabel = document.getElementById('mtow-label');
+            const landBtn = document.getElementById('type-landing');
+            const overBtn = document.getElementById('type-overflying');
+            const countryField = document.getElementById('country-field');
+            const countryInput = document.getElementById('new-country');
             const pendingBlockContainer = document.getElementById('pending-block-container');
-            
+            const dynamicContainer = document.getElementById('dynamic-ovf-container');
+            const mtowInput = document.getElementById('new-mtow');
+            const handlingField = document.getElementById('handling-field');
+            const servicesFields = document.getElementById('services-fields');
+            const groundHandlingInput = document.getElementById('new-ground-handling');
+
             if (type === 'landing') {
                 landBtn.className = "flex-1 py-2 rounded-md text-xs font-semibold transition-all bg-slate-800 text-white shadow-sm";
                 overBtn.className = "flex-1 py-2 rounded-md text-xs font-medium transition-all text-slate-400 hover:text-slate-200 hover:bg-slate-800/50";
-                countryField.classList.add('hidden');
-                countryInput.required = false; countryInput.value = '';
-                servicesFields.classList.remove('hidden');
-                groundHandlingInput.disabled = false; groundHandlingInput.classList.remove('opacity-50');
                 
-                mtowLabel.innerText = "MTOW (kg)";
+                countryField.classList.add('hidden');
+                countryInput.required = false;
+                
+                servicesFields.classList.remove('hidden');
+                handlingField.classList.remove('hidden');
+                groundHandlingInput.disabled = false; 
+                
                 mtowInput.required = true;
                 
                 pendingBlockContainer.classList.add('hidden');
                 document.getElementById('is-pending-block').checked = false;
                 togglePendingBlock(false);
+                
+                if (dynamicContainer) document.getElementById('landing-extra-inject').appendChild(dynamicContainer);
+
             } else {
                 overBtn.className = "flex-1 py-2 rounded-md text-xs font-semibold transition-all bg-slate-800 text-white shadow-sm";
                 landBtn.className = "flex-1 py-2 rounded-md text-xs font-medium transition-all text-slate-400 hover:text-slate-200 hover:bg-slate-800/50";
+                
                 countryField.classList.remove('hidden');
                 countryInput.required = true;
-                servicesFields.classList.add('hidden');
-                groundHandlingInput.disabled = true; groundHandlingInput.classList.add('opacity-50'); groundHandlingInput.value = '';
+                if (!countryInput.value) countryInput.value = 'INDIA';
                 
-                mtowLabel.innerText = "MTOW (kg) (Opt)";
+                servicesFields.classList.add('hidden');
+                handlingField.classList.add('hidden');
+                groundHandlingInput.disabled = true; 
+                groundHandlingInput.value = '';
+                
                 mtowInput.required = false;
                 
-                document.getElementById('new-catering').checked = false; document.getElementById('new-transport').checked = false; document.getElementById('new-fuel').checked = false;
+                document.getElementById('new-catering').checked = false; 
+                document.getElementById('new-transport').checked = false; 
+                document.getElementById('new-fuel').checked = false;
                 
                 pendingBlockContainer.classList.remove('hidden');
+
+                if (dynamicContainer) document.getElementById('ovf-extra-inject').appendChild(dynamicContainer);
             }
         }
 
@@ -920,7 +1099,6 @@
 
             let updates = { [field]: value };
             
-            // --- OPTIMISTIC UI INSTANT STATUS SNAP ---
             f[field] = value;
             let isNowReady = false;
 
@@ -963,7 +1141,6 @@
                 return;
             }
 
-            // --- COMPLIANCE LOCK FOR READY, DEPARTED, AND ARRIVED ---
             if (stat === 'Ready' || stat === 'Departed' || stat === 'Arrived') {
                 let isReady = false;
                 if (f.mission_type === 'overflying') {
@@ -1047,6 +1224,8 @@
             editingFlightId = null; 
             document.getElementById('modal-title').innerText = "Schedule Mission"; 
             document.getElementById('flight-form').reset(); 
+            resetAdvancedFields();
+            
             document.getElementById('mission-type-container').classList.remove('hidden');
             setMissionType('landing'); 
             document.getElementById('new-etd').value = '';
@@ -1066,13 +1245,14 @@
             }
 
             document.getElementById('modal-title').innerText = "Mission Config";
+            resetAdvancedFields();
             document.getElementById('mission-type-container').classList.remove('hidden');
             setMissionType(f.mission_type || 'landing');
             
             document.getElementById('new-tail').value = f.tail_number;
             document.getElementById('new-origin').value = f.origin_icao;
             document.getElementById('new-dest').value = f.dest_icao;
-            document.getElementById('new-country').value = f.country || '';
+            document.getElementById('new-country').value = f.country || (f.mission_type === 'overflying' ? 'INDIA' : '');
             document.getElementById('new-aircraft-type').value = f.aircraft_type || '';
             document.getElementById('new-mtow').value = f.mtow || '';
             document.getElementById('new-operator').value = f.operator_name || '';
@@ -1180,7 +1360,6 @@
                 if (selectedMissionType === 'landing' && old.fuel_service !== payload.fuel_service) changes.push(`Fuel: ${old.fuel_service ? 'Yes' : 'No'} -> ${payload.fuel_service ? 'Yes' : 'No'}`);
                 if (old.remarks !== payload.remarks) changes.push(`Remarks: ${vStr(old.remarks)} -> ${vStr(payload.remarks)}`);
                 
-                // --- NEW AUTO-PROMOTION ENGINE ---
                 let isNowReady = false;
                 if (payload.mission_type === 'overflying') {
                     isNowReady = payload.permit_ready;
@@ -1191,9 +1370,9 @@
                 if (old.status === 'Pending' && isNowReady) {
                     payload.status = 'Ready';
                     changes.push(`Status auto-promoted to READY`);
-                } else if (old.status === 'Ready' && !isNowReady) {
+                } else if (old.status !== 'Pending' && !isNowReady) {
                     payload.status = 'Pending';
-                    changes.push(`Status auto-demoted to PENDING`);
+                    changes.push(`Status auto-demoted to PENDING (Incomplete Checklist)`);
                 }
 
                 const ok = await safeUpdateFlight(editingFlightId, payload); 
@@ -1344,6 +1523,8 @@
             const activeGrid = document.getElementById('flight-grid'), completedGrid = document.getElementById('completed-grid');
             let activeObjects = [], completedObjects = [], weekT = 0, monthT = 0, yearT = 0, allT = 0;
             
+            window.renderedGroups = {};
+
             allFlights.forEach(f => {
                 const meta = getFlightMeta(f, now);
                 if (!meta.invalidDate && meta.isArchived) { 
@@ -1387,6 +1568,8 @@
                         const group = overflightGroupsCompleted[key];
                         if (group.length > 1) {
                             group.sort((a,b) => a.meta.flightDate - b.meta.flightDate);
+                            const groupId = `group-${safeText(group[0].f.tail_number)}-${safeText(group[0].f.permit_number).replace(/[^a-zA-Z0-9]/g, '')}`;
+                            window.renderedGroups[groupId] = group.map(g => g.f);
                             completedObjects.push({ html: generateGroupCard(group, true, false, false, false), date: group[0].meta.flightDate });
                         } else {
                             completedObjects.push({ html: generateCard(f, false, false, true, false, false), date: meta.flightDate });
@@ -1400,6 +1583,8 @@
                             const hasPermitPending = group.some(g => g.meta.isPermitPending);
                             const hasInProgress = group.some(g => g.meta.isInProgress);
                             group.sort((a,b) => a.meta.flightDate - b.meta.flightDate);
+                            const groupId = `group-${safeText(group[0].f.tail_number)}-${safeText(group[0].f.permit_number).replace(/[^a-zA-Z0-9]/g, '')}`;
+                            window.renderedGroups[groupId] = group.map(g => g.f);
                             activeObjects.push({ html: generateGroupCard(group, false, hasRisk, hasPermitPending, hasInProgress), date: group[0].meta.flightDate, inProgress: hasInProgress });
                         } else {
                             activeObjects.push({ html: generateCard(f, meta.isRisk, meta.isPermitPending, false, false, meta.isInProgress), date: meta.flightDate, inProgress: meta.isInProgress });
@@ -1448,8 +1633,16 @@
 
             const isPendingBlock = baseF.permit_number && baseF.permit_number.startsWith('PENDING-BLOCK-');
             const displayPermit = isPendingBlock ? 'PERMIT AWAITED' : safeText(baseF.permit_number);
+            
+            // UX OVERLAY FOR SELECT MODE
+            const isSelected = window.selectedCards.has(groupId);
+            const selectOverlay = window.isSelectMode ? `
+                <div class="absolute inset-0 z-50 rounded-[1rem] bg-slate-950/40 backdrop-blur-[1px] cursor-pointer transition-all ${isSelected ? 'border-4 border-sky-500 shadow-[inset_0_0_30px_rgba(14,165,233,0.3)]' : 'border-2 border-slate-700 hover:border-slate-500 hover:bg-slate-900/20'}" onclick="handleCardSelect('${groupId}', event)">
+                    ${isSelected ? '<div class="absolute top-4 right-4 bg-sky-500 text-white p-1.5 rounded-md shadow-lg"><i data-lucide="check" class="w-5 h-5"></i></div>' : ''}
+                </div>` : '';
 
             const frontCard = `
+                ${selectOverlay}
                 <div class="p-4 sm:p-6 flex-1 flex flex-col h-full bg-slate-900 rounded-[1rem]">
                     <div class="flex justify-between items-start mb-4 gap-3">
                         <div class="flex-1 min-w-0">
@@ -1483,8 +1676,8 @@
                             <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Add Leg
                         </button>
                         ` : `<span></span>`}
-                        <button type="button" onclick="flipCard('card-${groupId}')" class="text-[10px] font-semibold text-sky-400 hover:text-sky-300 flex items-center gap-1.5 transition-colors bg-sky-500/10 hover:bg-sky-500/20 px-3 py-1.5 rounded-md shrink-0">
-                            Manage Legs <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                        <button type="button" onclick="flipCard('card-${groupId}')" class="text-[10px] font-bold text-sky-400 hover:text-sky-300 flex items-center gap-1.5 transition-colors bg-sky-500/10 hover:bg-sky-500/20 px-4 py-2 rounded-lg shrink-0 border border-sky-500/20 shadow-sm uppercase tracking-wider">
+                            <i data-lucide="layers" class="w-3.5 h-3.5"></i> Open Blocks
                         </button>
                     </div>
                 </div>
@@ -1612,6 +1805,13 @@
             const lockClick = hasValidPermit ? `onclick="event.preventDefault(); return false;"` : '';
             const cursorClass = hasValidPermit ? 'cursor-not-allowed opacity-75' : 'cursor-pointer';
 
+            // UX OVERLAY FOR SELECT MODE
+            const isSelected = window.selectedCards.has(f.id);
+            const selectOverlay = window.isSelectMode ? `
+                <div class="absolute inset-0 z-50 rounded-[1rem] bg-slate-950/40 backdrop-blur-[1px] cursor-pointer transition-all ${isSelected ? 'border-4 border-sky-500 shadow-[inset_0_0_30px_rgba(14,165,233,0.3)]' : 'border-2 border-slate-700 hover:border-slate-500 hover:bg-slate-900/20'}" onclick="handleCardSelect('${f.id}', event)">
+                    ${isSelected ? '<div class="absolute top-4 right-4 bg-sky-500 text-white p-1.5 rounded-md shadow-lg"><i data-lucide="check" class="w-5 h-5"></i></div>' : ''}
+                </div>` : '';
+
             let checklistHTML = '';
             if (!isArchived) {
                 if (f.mission_type === 'overflying') {
@@ -1645,6 +1845,7 @@
             const servicesSection = servicesArr.length > 0 ? `<div class="flex items-center gap-1.5 ml-auto border-l border-slate-700 pl-3 shrink-0">${servicesArr.join('')}</div>` : '';
 
             const frontCard = `
+                ${selectOverlay}
                 <div class="p-4 sm:p-6 flex-1 flex flex-col h-full bg-slate-900 rounded-[1rem]">
                     <div class="flex justify-between items-start mb-4 gap-3">
                         <div class="flex-1 min-w-0">
@@ -1697,12 +1898,15 @@
                         </select>
                         ` : `<span class="text-[10px] font-semibold text-slate-500 uppercase tracking-widest shrink-0">Record Closed</span>`}
                         
-                        <button type="button" onclick="flipCard('card-${f.id}')" class="text-[10px] font-semibold text-sky-400 hover:text-sky-300 flex items-center gap-1.5 transition-colors bg-sky-500/10 hover:bg-sky-500/20 px-3 py-1.5 rounded-md shrink-0">
-                            Mission Log <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                        <button type="button" onclick="flipCard('card-${f.id}')" class="text-[10px] font-bold text-sky-400 hover:text-sky-300 flex items-center gap-1.5 transition-colors bg-sky-500/10 hover:bg-sky-500/20 px-4 py-2 rounded-lg shrink-0 border border-sky-500/20 shadow-sm uppercase tracking-wider">
+                            <i data-lucide="check-square" class="w-3.5 h-3.5"></i> Open Checklist
                         </button>
                     </div>
                 </div>
             `;
+
+            const isPendingBlock = f.permit_number?.startsWith('PENDING-BLOCK-');
+            const displayPermit = isPendingBlock ? 'AWAITED (BLOCK)' : safeText(f.permit_number || 'AWAITED');
 
             const backCard = `
                 <div class="p-4 sm:p-6 flex flex-col h-full bg-slate-900 rounded-[1rem] relative overflow-hidden">
